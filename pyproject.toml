@@ -8,3 +8,14 @@ authors = [
 ]
 
 readme = "README.md"
+
+[dependency-groups]
+format = [
+    "black>=26.3.1",
+    "isort>=8.0.1",
+]
+lint = [
+    "codespell>=2.4.2",
+    "pylint>=4.0.5",
+    "pyproject-flake8>=7.0.0",
+]
