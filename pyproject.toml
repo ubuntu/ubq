@@ -1,0 +1,10 @@
+[project]
+name = "ubq"
+version = "0.1.0"
+description = "Ubuntu Query"
+
+authors = [
+	{ name = "Lena Voytek", email = "lena@voytek.dev" },
+]
+
+readme = "README.md"
