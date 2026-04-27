@@ -1,0 +1,1 @@
+"""Launchpad bug data provider."""
