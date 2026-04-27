@@ -9,6 +9,7 @@ from ubq.models.common import CommentRecord, UserRecord
 @dataclass(frozen=True, slots=True)
 class BugTaskRecord:
     """Subtask record for a bug."""
+
     title: str
     target: str | None = None
     importance: str | None = None
@@ -32,6 +33,7 @@ class BugTaskRecord:
 @dataclass(frozen=True, slots=True)
 class BugRecord:
     """General bug information record."""
+
     provider_name: str
     id: str
     title: str
