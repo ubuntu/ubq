@@ -154,8 +154,7 @@ class ProviderRegistry:
         if not providers:
             available = ", ".join(sorted(self._providers))
             raise ValueError(
-                f"Unknown provider '{provider_name}'. "
-                f"Available providers: {available}"
+                f"Unknown provider '{provider_name}'. Available providers: {available}"
             )
         return providers
 
