@@ -1,86 +1,177 @@
-"""Registry of Ubuntu data providers."""
+"""Registry and session manager for Ubuntu data providers."""
 
-from typing import Iterable
+from collections.abc import Callable, Iterable
 
+from ubq.models import AuthContext, AuthScope, ProviderCredentials
 from ubq.providers import (
     BugProvider,
     LaunchpadBugProvider,
+    LaunchpadPackageProvider,
     MergeRequestProvider,
     PackageProvider,
     Provider,
     VersionProvider,
 )
+from ubq.providers.session import ProviderSession
 
 
 class ProviderRegistry:
-    """Registry of usable ubq data providers."""
+    """Registry of providers and their authenticated sessions."""
 
-    def __init__(self, providers: Iterable[Provider] | None = None):
-        self._bug_providers: dict[str, BugProvider] = {}
-        self._version_providers: dict[str, VersionProvider] = {}
-        self._package_providers: dict[str, PackageProvider] = {}
-        self._merge_request_providers: dict[str, MergeRequestProvider] = {}
-        initial_providers = providers or (LaunchpadBugProvider(),)
+    def __init__(
+        self,
+        providers: Iterable[Provider] | None = None,
+    ):
+        self._providers: dict[str, list[Provider]] = {}
+        self._sessions: dict[tuple[str, AuthScope], ProviderSession] = {}
+        initial_providers = providers or (
+            LaunchpadBugProvider(),
+            LaunchpadPackageProvider(),
+        )
 
         for provider in initial_providers:
             self.register(provider)
 
     def register(self, provider: Provider) -> None:
-        """Register a provider by its provider name and capability."""
+        """Register a provider by provider name."""
         key = provider.provider_name.lower()
-        if isinstance(provider, BugProvider):
-            self._bug_providers[key] = provider
-        if isinstance(provider, VersionProvider):
-            self._version_providers[key] = provider
-        if isinstance(provider, PackageProvider):
-            self._package_providers[key] = provider
-        if isinstance(provider, MergeRequestProvider):
-            self._merge_request_providers[key] = provider
+        self._providers.setdefault(key, []).append(provider)
 
-    def get_bug_provider(self, provider_name: str) -> BugProvider:
-        """Return bug provider for the given provider name."""
-        return self._get_from_map(provider_name, self._bug_providers, "bug")
+    def login(
+        self,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+        credentials: ProviderCredentials | None = None,
+        force: bool = False,
+    ) -> ProviderSession:
+        """Authenticate with a provider and cache the scoped session."""
+        key = (provider_name.lower(), scope)
+        if not force:
+            existing = self._sessions.get(key)
+            if existing is not None:
+                return existing
 
-    def get_version_provider(self, provider_name: str) -> VersionProvider:
-        """Return version provider for the given provider name."""
-        return self._get_from_map(provider_name, self._version_providers, "version")
+        providers = self._get_providers(provider_name)
+        auth_context = AuthContext(
+            provider_name=providers[0].provider_name,
+            scope=scope,
+            credentials=credentials,
+        )
+        session = providers[0].authenticate(auth_context)
+        for provider in providers[1:]:
+            session = session.with_provider(provider)
+        self._sessions[key] = session
+        return session
 
-    def get_package_provider(self, provider_name: str) -> PackageProvider:
-        """Return package provider for the given provider name."""
-        return self._get_from_map(provider_name, self._package_providers, "package")
+    def get_session(
+        self,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> ProviderSession:
+        """Get an existing scoped session for the provider."""
+        key = (provider_name.lower(), scope)
+        session = self._sessions.get(key)
+        if session is None:
+            raise ValueError(
+                "No active session for provider "
+                f"'{provider_name}' with scope '{scope.value}'. "
+                "Call login() first."
+            )
+        return session
 
-    def get_merge_request_provider(self, provider_name: str) -> MergeRequestProvider:
-        """Return merge request provider for the given provider name."""
-        return self._get_from_map(
+    def get_bug_provider(
+        self,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> BugProvider:
+        """Return bug provider for an active scoped session."""
+        return self._capability_from_session(
             provider_name,
-            self._merge_request_providers,
+            scope,
+            "bug",
+            lambda session: session.get_bug_provider(),
+        )
+
+    def get_version_provider(
+        self,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> VersionProvider:
+        """Return version provider for an active scoped session."""
+        return self._capability_from_session(
+            provider_name,
+            scope,
+            "version",
+            lambda session: session.get_version_provider(),
+        )
+
+    def get_package_provider(
+        self,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> PackageProvider:
+        """Return package provider for an active scoped session."""
+        return self._capability_from_session(
+            provider_name,
+            scope,
+            "package",
+            lambda session: session.get_package_provider(),
+        )
+
+    def get_merge_request_provider(
+        self,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> MergeRequestProvider:
+        """Return merge request provider for an active scoped session."""
+        return self._capability_from_session(
+            provider_name,
+            scope,
             "merge request",
+            lambda session: session.get_merge_request_provider(),
         )
 
     def available_provider_names(self) -> tuple[str, ...]:
-        """List all provider names with at least one registered capability."""
-        names = {
-            *self._bug_providers,
-            *self._version_providers,
-            *self._package_providers,
-            *self._merge_request_providers,
-        }
-        return tuple(sorted(names))
+        """List all registered provider names."""
+        return tuple(sorted(self._providers))
 
-    @staticmethod
-    def _get_from_map(
+    def active_sessions(self) -> tuple[tuple[str, AuthScope], ...]:
+        """List active provider sessions by provider and scope."""
+        return tuple(sorted(self._sessions))
+
+    def clear_session(
+        self,
         provider_name: str,
-        providers: dict[str, Provider],
-        capability_name: str,
-    ) -> Provider:
-        """Return provider for the specific capability map."""
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> None:
+        """Clear a cached provider session."""
+        self._sessions.pop((provider_name.lower(), scope), None)
+
+    def _get_providers(self, provider_name: str) -> list[Provider]:
+        """Return registered providers for the given provider name."""
         key = provider_name.lower()
-        provider = providers.get(key)
-        if provider is None:
-            available = ", ".join(sorted(providers))
+        providers = self._providers.get(key)
+        if not providers:
+            available = ", ".join(sorted(self._providers))
             raise ValueError(
-                "Provider "
-                f"'{provider_name}' does not support {capability_name}. "
+                f"Unknown provider '{provider_name}'. "
                 f"Available providers: {available}"
             )
-        return provider
+        return providers
+
+    def _capability_from_session(
+        self,
+        provider_name: str,
+        scope: AuthScope,
+        capability_name: str,
+        getter: Callable[[ProviderSession], object | None],
+    ):
+        """Return capability from an active session or raise error."""
+        session = self.get_session(provider_name, scope)
+        capability = getter(session)
+        if capability is None:
+            raise ValueError(
+                f"Provider '{provider_name}' does not support "
+                f"{capability_name} queries for scope '{scope.value}'."
+            )
+        return capability
