@@ -8,6 +8,9 @@ authors = [
 ]
 
 readme = "README.md"
+dependencies = [
+    "launchpadlib>=2.1.0",
+]
 
 [dependency-groups]
 format = [
