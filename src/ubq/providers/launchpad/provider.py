@@ -17,7 +17,7 @@ class LaunchpadProvider:
 
     def authenticate(self, auth_context: AuthContext) -> ProviderSession:
         """Authenticate with Launchpad and return a reusable session."""
-        if auth_context.scope == AuthScope.READ_WRITE:
+        if auth_context.credentials is not None and auth_context.credentials.token is not None:
             credentials = Credentials.from_string(auth_context.credentials.token)
 
             self._launchpad = Launchpad(
@@ -27,15 +27,17 @@ class LaunchpadProvider:
                 service_root="production",
                 version="devel",
             )
-            self._launchpad = self._launchpad.login_with(
-                application_name="ubq",
-                allow_access_levels=["WRITE_PRIVATE"],
-            )
+
         else:
+            access_levels = ["READ_PUBLIC"]
+
+            if auth_context.scope == AuthScope.READ_WRITE:
+                access_levels = ["WRITE_PRIVATE"]
+
             self._launchpad = Launchpad.login_with(
                 application_name="ubq",
                 service_root="production",
-                allow_access_levels=["READ_PUBLIC"],
+                allow_access_levels=access_levels,
                 version="devel",
             )
 
