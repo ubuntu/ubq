@@ -332,6 +332,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "launchpadlib" },
+    { name = "lazr-restfulclient" },
 ]
 
 [package.dev-dependencies]
@@ -346,7 +347,10 @@ lint = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "launchpadlib", specifier = ">=2.1.0" }]
+requires-dist = [
+    { name = "launchpadlib", specifier = ">=2.1.0" },
+    { name = "lazr-restfulclient", specifier = ">=0.14.6" },
+]
 
 [package.metadata.requires-dev]
 format = [

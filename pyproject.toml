@@ -10,6 +10,7 @@ authors = [
 readme = "README.md"
 dependencies = [
     "launchpadlib>=2.1.0",
+    "lazr-restfulclient>=0.14.6",
 ]
 
 [dependency-groups]
