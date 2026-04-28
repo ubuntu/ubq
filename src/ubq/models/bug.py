@@ -37,7 +37,7 @@ class BugRecord:
     provider_name: str
     id: str
     title: str
-    description: str
+    description: str | None = None
     tags: list[str] = field(default_factory=list)
     comments: list[CommentRecord] = field(default_factory=list)
     created_at: datetime | None = None
