@@ -2,6 +2,14 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+
+
+class AuthScope(Enum):
+    """Login permission scope Enum."""
+
+    READ_ONLY = "read-only"
+    READ_WRITE = "read-write"
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,3 +29,20 @@ class CommentRecord:
     content: str = ""
     created_at: datetime | None = None
     edited_at: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ProviderCredentials:
+    """Credentials used to authenticate with a provider."""
+
+    username: str | None = None
+    token: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AuthContext:
+    """Authentication context used when creating a provider session."""
+
+    provider_name: str
+    scope: AuthScope
+    credentials: ProviderCredentials | None = None
