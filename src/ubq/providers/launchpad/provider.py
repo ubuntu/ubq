@@ -18,7 +18,7 @@ class LaunchpadProvider:
     def authenticate(self, auth_context: AuthContext) -> ProviderSession:
         """Authenticate with Launchpad and return a reusable session."""
         if auth_context.scope == AuthScope.READ_WRITE:
-            credentials = Credentials(auth_context.credentials.token)
+            credentials = Credentials.from_string(auth_context.credentials.token)
 
             self._launchpad = Launchpad(
                 credentials,
