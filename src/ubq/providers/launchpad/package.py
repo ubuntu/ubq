@@ -10,4 +10,3 @@ class LaunchpadPackageProvider(LaunchpadProvider, PackageProvider):
 
     def get_package(self, package_name: str) -> PackageRecord:
         """Fetch a Launchpad package by name."""
-        ...

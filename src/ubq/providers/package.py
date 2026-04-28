@@ -12,4 +12,3 @@ class PackageProvider(Provider):
 
     def get_package(self, package_name: str) -> PackageRecord:
         """Fetch a single package by provider-specific name."""
-        ...

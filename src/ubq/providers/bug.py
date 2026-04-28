@@ -12,4 +12,3 @@ class BugProvider(Provider):
 
     def get_bug(self, bug_id: str) -> BugRecord:
         """Fetch a single bug by provider-specific identifier."""
-        ...

@@ -12,4 +12,3 @@ class MergeRequestProvider(Provider):
 
     def get_merge_request(self, merge_request_id: str) -> MergeRequestRecord:
         """Fetch a merge request by provider-specific identifier."""
-        ...

@@ -10,4 +10,3 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
     def get_bug(self, bug_id: str) -> BugRecord:
         """Fetch a Launchpad bug by identifier."""
-        ...

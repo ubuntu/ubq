@@ -12,4 +12,3 @@ class VersionProvider(Provider):
 
     def get_version(self, package_name: str, pocket: str) -> VersionRecord:
         """Fetch the version of a package by name and release pocket."""
-        ...
