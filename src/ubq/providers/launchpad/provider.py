@@ -15,6 +15,11 @@ class LaunchpadProvider:
     def __init__(self):
         self._launchpad = None
 
+    def _check_authenticated(self) -> None:
+        """Check if provider session is authenticated and raise if not."""
+        if self._launchpad is None:
+            raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
+
     def authenticate(self, auth_context: AuthContext) -> "ProviderSession":
         """Authenticate with Launchpad and return a reusable session."""
         if auth_context.credentials is not None and auth_context.credentials.token is not None:

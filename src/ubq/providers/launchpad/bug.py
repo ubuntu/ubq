@@ -17,8 +17,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
     def _fetch_lp_bug_by_id(self, bug_id: str) -> Any:
         """Load a Launchpad URL and attempt to convert it to arbitrary bug data."""
-        if self._launchpad is None:
-            raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
+        self._check_authenticated()
 
         try:
             lp_object = self._launchpad.load(BASE_BUG_URL + bug_id)
@@ -36,8 +35,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
     def get_bug_task_by_url(self, task_url: str) -> "BugTaskRecord | None":
         """Fetch a Launchpad bug task by URL."""
-        if self._launchpad is None:
-            raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
+        self._check_authenticated()
 
         try:
             lp_task = self._launchpad.load(task_url)
