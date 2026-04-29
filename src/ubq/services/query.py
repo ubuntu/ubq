@@ -37,9 +37,14 @@ class QueryService:
         bug_id: str,
         provider_name: str,
         scope: AuthScope = AuthScope.READ_ONLY,
+        metadata_only: bool = False,
     ) -> BugRecord:
         """Fetch a bug from a provider using an active scoped session."""
         provider = self._registry.get_bug_provider(provider_name, scope=scope)
+
+        if metadata_only:
+            return provider.get_bug_metadata(bug_id)
+
         return provider.get_bug(bug_id)
 
     def get_version(

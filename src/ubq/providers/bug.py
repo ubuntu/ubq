@@ -10,5 +10,8 @@ from ubq.providers.provider import Provider
 class BugProvider(Provider, Protocol):
     """Contract that all bug providers must implement."""
 
+    def get_bug_metadata(self, bug_id: str) -> BugRecord:
+        """Fetch a single bug without additional requests for comments or tasks."""
+
     def get_bug(self, bug_id: str) -> BugRecord:
         """Fetch a single bug by provider-specific identifier."""

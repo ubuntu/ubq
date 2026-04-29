@@ -1,5 +1,7 @@
 """Launchpad bug data provider."""
 
+from typing import Any
+
 from lazr.restfulclient.errors import NotFound
 
 from ubq.models import BugRecord, BugTaskRecord, UserRecord
@@ -12,6 +14,25 @@ BASE_USER_URL = "https://launchpad.net/~"
 
 class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
     """Provider implementation for Launchpad bugs."""
+
+    def _fetch_lp_bug_by_id(self, bug_id: str) -> Any:
+        """Load a Launchpad URL and attempt to convert it to arbitrary bug data."""
+        if self._launchpad is None:
+            raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
+
+        try:
+            lp_object = self._launchpad.load(BASE_BUG_URL + bug_id)
+        except NotFound:
+            return None
+
+        # Launchpad will sometimes return default bug_task for a bug, if so it needs to be
+        # converted to a bug explicitly. Otherwise assume it's already a bug.
+        try:
+            lp_bug = lp_object.bug
+        except AttributeError:
+            lp_bug = lp_object
+
+        return lp_bug
 
     def get_bug_task_by_url(self, task_url: str):
         """Fetch a Launchpad bug task by URL."""
@@ -51,22 +72,29 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             assignee=assignee,
         )
 
-    def get_bug(self, bug_id: str) -> BugRecord:
-        """Fetch a Launchpad bug by identifier."""
-        if self._launchpad is None:
-            raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
-
-        try:
-            lp_object = self._launchpad.load(BASE_BUG_URL + bug_id)
-        except NotFound:
+    def get_bug_metadata(self, bug_id: str) -> BugRecord:
+        """Fetch a Launchpad bug without comments or tasks."""
+        lp_bug = self._fetch_lp_bug_by_id(bug_id)
+        if lp_bug is None:
             return None
 
-        # Launchpad will sometimes return default bug_task for a bug, if so it needs to be
-        # converted to a bug explicitly. Otherwise assume it's already a bug.
-        try:
-            lp_bug = lp_object.bug
-        except AttributeError:
-            lp_bug = lp_object
+        return BugRecord(
+            provider_name=self.provider_name,
+            id=str(lp_bug.id),
+            title=lp_bug.title,
+            description=lp_bug.description,
+            created_at=lp_bug.date_created,
+            updated_at=lp_bug.date_last_updated,
+            last_message_at=lp_bug.date_last_message,
+            last_patch_at=lp_bug.latest_patch_uploaded,
+            tags=lp_bug.tags,
+        )
+
+    def get_bug(self, bug_id: str) -> BugRecord:
+        """Fetch a Launchpad bug by identifier."""
+        lp_bug = self._fetch_lp_bug_by_id(bug_id)
+        if lp_bug is None:
+            return None
 
         tasks = []
         if hasattr(lp_bug, "bug_tasks"):

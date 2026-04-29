@@ -48,6 +48,7 @@ def main():
         bug_id=bug_id,
         provider_name="launchpad",
         scope=AuthScope.READ_ONLY,
+        metadata_only=True,
     )
 
     if bug is None:
