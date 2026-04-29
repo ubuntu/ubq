@@ -72,7 +72,8 @@ def main():
             print("  Comments:")
             for comment in bug.comments:
                 author = comment.author.display_name if comment.author else "N/A"
-                print(f"    - {author}: {comment.content} (Created At: {comment.created_at}, Edited At: {comment.edited_at})")
+                print(f"    - {author}: {comment.content}")
+
 
 if __name__ == "__main__":
     main()
