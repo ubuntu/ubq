@@ -37,3 +37,10 @@ line_length = 99
 
 [tool.pylint]
 max-line-length = 99
+
+[tool.pylint."messages control"]
+disable = [
+    "R0903", # Too few public methods
+    "R0902", # Too many instance attributes
+    "C0415", # Import outside toplevel
+]
