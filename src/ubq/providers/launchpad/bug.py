@@ -1,23 +1,65 @@
 """Launchpad bug data provider."""
 
-from lazr.restfulclient.resource import Entry
+from lazr.restfulclient.errors import NotFound
 
-from ubq.models import BugRecord, UserRecord
+from ubq.models import BugRecord, BugTaskRecord, UserRecord
 from ubq.providers.bug import BugProvider
 from ubq.providers.launchpad.provider import LaunchpadProvider
 
 BASE_BUG_URL = "https://api.launchpad.net/devel/ubuntu/+bug/"
+BASE_USER_URL = "https://launchpad.net/~"
 
 
 class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
     """Provider implementation for Launchpad bugs."""
+
+    def get_bug_task_by_url(self, task_url: str):
+        """Fetch a Launchpad bug task by URL."""
+        if self._launchpad is None:
+            raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
+
+        try:
+            lp_task = self._launchpad.load(task_url)
+        except NotFound:
+            return None
+
+        assignee = None
+        if hasattr(lp_task, "assignee"):
+            assignee = UserRecord(
+                username=lp_task.assignee.name,
+                display_name=lp_task.assignee.display_name,
+                profile_url=f"{BASE_USER_URL}{lp_task.assignee.name}",
+            )
+
+        return BugTaskRecord(
+            title=lp_task.title,
+            target=lp_task.target,
+            importance=lp_task.importance,
+            status=lp_task.status,
+            date_assigned=lp_task.date_assigned,
+            date_closed=lp_task.date_closed,
+            date_created=lp_task.date_created,
+            date_left_closed=lp_task.date_left_closed,
+            date_left_new=lp_task.date_left_new,
+            date_incomplete=lp_task.date_incomplete,
+            date_confirmed=lp_task.date_confirmed,
+            date_triaged=lp_task.date_triaged,
+            date_in_progress=lp_task.date_in_progress,
+            date_fix_committed=lp_task.date_fix_committed,
+            date_fix_released=lp_task.date_fix_released,
+            milestone=lp_task.milestone.name if lp_task.milestone else None,
+            assignee=assignee,
+        )
 
     def get_bug(self, bug_id: str) -> BugRecord:
         """Fetch a Launchpad bug by identifier."""
         if self._launchpad is None:
             raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
 
-        lp_object = self._launchpad.load(BASE_BUG_URL + bug_id)
+        try:
+            lp_object = self._launchpad.load(BASE_BUG_URL + bug_id)
+        except NotFound:
+            return None
 
         # Launchpad will sometimes return default bug_task for a bug, if so it needs to be
         # converted to a bug explicitly. Otherwise assume it's already a bug.
@@ -26,9 +68,19 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         except AttributeError:
             lp_bug = lp_object
 
+        tasks = []
+        if hasattr(lp_bug, "bug_tasks"):
+            tasks = [self.get_bug_task_by_url(str(task)) for task in lp_bug.bug_tasks]
+
         return BugRecord(
             provider_name=self.provider_name,
             id=str(lp_bug.id),
             title=lp_bug.title,
+            description=lp_bug.description,
             created_at=lp_bug.date_created,
+            updated_at=lp_bug.date_last_updated,
+            last_message_at=lp_bug.date_last_message,
+            last_patch_at=lp_bug.latest_patch_uploaded,
+            tags=lp_bug.tags,
+            bug_tasks=tasks,
         )
