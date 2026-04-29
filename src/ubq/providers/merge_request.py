@@ -10,5 +10,5 @@ from ubq.providers.provider import Provider
 class MergeRequestProvider(Provider, Protocol):
     """Contract that all merge request providers must implement."""
 
-    def get_merge_request(self, merge_request_id: str) -> MergeRequestRecord:
+    def get_merge_request(self, merge_request_id: str) -> "MergeRequestRecord | None":
         """Fetch a merge request by provider-specific identifier."""

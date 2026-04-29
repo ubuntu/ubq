@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from lazr.restfulclient.errors import NotFound
+from lazr.restfulclient.errors import NotFound  # type: ignore[import-untyped]
 
 from ubq.models import BugRecord, BugTaskRecord, CommentRecord, UserRecord
 from ubq.providers.bug import BugProvider
@@ -34,7 +34,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
         return lp_bug
 
-    def get_bug_task_by_url(self, task_url: str):
+    def get_bug_task_by_url(self, task_url: str) -> "BugTaskRecord | None":
         """Fetch a Launchpad bug task by URL."""
         if self._launchpad is None:
             raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
@@ -72,7 +72,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             assignee=assignee,
         )
 
-    def get_bug_metadata(self, bug_id: str) -> BugRecord:
+    def get_bug_metadata(self, bug_id: str) -> "BugRecord | None":
         """Fetch a Launchpad bug without comments or tasks."""
         lp_bug = self._fetch_lp_bug_by_id(bug_id)
         if lp_bug is None:
@@ -90,17 +90,20 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             tags=lp_bug.tags,
         )
 
-    def get_bug(self, bug_id: str) -> BugRecord:
+    def get_bug(self, bug_id: str) -> "BugRecord | None":
         """Fetch a Launchpad bug by identifier."""
         lp_bug = self._fetch_lp_bug_by_id(bug_id)
         if lp_bug is None:
             return None
 
-        tasks = []
+        tasks: list["BugTaskRecord"] = []
         if hasattr(lp_bug, "bug_tasks"):
-            tasks = [self.get_bug_task_by_url(str(task)) for task in lp_bug.bug_tasks]
+            for task in lp_bug.bug_tasks:
+                task_record = self.get_bug_task_by_url(str(task))
+                if task_record is not None:
+                    tasks.append(task_record)
 
-        comments = []
+        comments: list["CommentRecord"] = []
         if hasattr(lp_bug, "messages"):
             for msg in lp_bug.messages:
                 if msg.visible:

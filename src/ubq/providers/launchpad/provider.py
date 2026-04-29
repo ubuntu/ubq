@@ -1,7 +1,7 @@
 """Shared Launchpad provider base classes."""
 
-from launchpadlib.credentials import Credentials
-from launchpadlib.launchpad import Launchpad
+from launchpadlib.credentials import Credentials  # type: ignore[import-untyped]
+from launchpadlib.launchpad import Launchpad  # type: ignore[import-untyped]
 
 from ubq.models import AuthContext, AuthScope
 from ubq.providers.session import ProviderSession
@@ -15,7 +15,7 @@ class LaunchpadProvider:
     def __init__(self):
         self._launchpad = None
 
-    def authenticate(self, auth_context: AuthContext) -> ProviderSession:
+    def authenticate(self, auth_context: AuthContext) -> "ProviderSession":
         """Authenticate with Launchpad and return a reusable session."""
         if auth_context.credentials is not None and auth_context.credentials.token is not None:
             credentials = Credentials.from_string(auth_context.credentials.token)

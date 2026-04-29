@@ -8,5 +8,5 @@ from ubq.providers.package import PackageProvider
 class LaunchpadPackageProvider(LaunchpadProvider, PackageProvider):
     """Provider implementation for Launchpad packages."""
 
-    def get_package(self, package_name: str) -> PackageRecord:
+    def get_package(self, package_name: str) -> "PackageRecord | None":
         """Fetch a Launchpad package by name."""
