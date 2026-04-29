@@ -12,9 +12,10 @@ from ubq.services import QueryService
 def main():
     """Fetch and display a Launchpad bug."""
     if len(sys.argv) < 2:
-        print("Usage: get_launchpad_bug.py <bug_id> [--credentials-file FILE]")
+        print("Usage: get_launchpad_bug.py <bug_id> [--show-comments] [--credentials-file FILE]")
         print()
         print("Example: get_launchpad_bug.py 123456")
+        print("Example: get_launchpad_bug.py 123456 --show-comments")
         print("Example: get_launchpad_bug.py 123456 --credentials-file credentials.oauth")
         sys.exit(1)
 
@@ -28,6 +29,9 @@ def main():
             cred_file = sys.argv[cred_idx + 1]
             with open(cred_file, "r") as f:
                 token = f.read().strip()
+
+    # Fetch comments too
+    show_comments = "--show-comments" in sys.argv
 
     # Create service with default registry
     service = QueryService()
@@ -48,7 +52,7 @@ def main():
         bug_id=bug_id,
         provider_name="launchpad",
         scope=AuthScope.READ_ONLY,
-        metadata_only=True,
+        metadata_only=not show_comments,
     )
 
     if bug is None:
@@ -58,14 +62,17 @@ def main():
         print(f"Bug {bug_id}:")
         print(f"  Title: {getattr(bug, 'title', 'N/A')}")
         print(f"  Tags: {getattr(bug, 'tags', 'N/A')}")
-        print(f"  Status: {getattr(bug, 'status', 'N/A')}")
-        print(f"  Priority: {getattr(bug, 'priority', 'N/A')}")
         print(f"  Assignee: {getattr(bug, 'assignee', 'N/A')}")
         print(f"  Created At: {getattr(bug, 'created_at', 'N/A')}")
         print(f"  Updated At: {getattr(bug, 'updated_at', 'N/A')}")
         print(f"  Last Message At: {getattr(bug, 'last_message_at', 'N/A')}")
         print(f"  Last Patch At: {getattr(bug, 'last_patch_at', 'N/A')}")
 
+        if show_comments and hasattr(bug, "comments"):
+            print("  Comments:")
+            for comment in bug.comments:
+                author = comment.author.display_name if comment.author else "N/A"
+                print(f"    - {author}: {comment.content} (Created At: {comment.created_at}, Edited At: {comment.edited_at})")
 
 if __name__ == "__main__":
     main()

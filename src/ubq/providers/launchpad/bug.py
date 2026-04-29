@@ -4,7 +4,7 @@ from typing import Any
 
 from lazr.restfulclient.errors import NotFound
 
-from ubq.models import BugRecord, BugTaskRecord, UserRecord
+from ubq.models import BugRecord, BugTaskRecord, CommentRecord, UserRecord
 from ubq.providers.bug import BugProvider
 from ubq.providers.launchpad.provider import LaunchpadProvider
 
@@ -100,6 +100,27 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         if hasattr(lp_bug, "bug_tasks"):
             tasks = [self.get_bug_task_by_url(str(task)) for task in lp_bug.bug_tasks]
 
+        comments = []
+        if hasattr(lp_bug, "messages"):
+            for msg in lp_bug.messages:
+                if msg.visible:
+                    author = None
+                    if hasattr(msg, "owner") and msg.owner is not None:
+                        author = UserRecord(
+                            username=msg.owner.name,
+                            display_name=msg.owner.display_name,
+                            profile_url=f"{BASE_USER_URL}{msg.owner.name}",
+                        )
+
+                    comments.append(
+                        CommentRecord(
+                            author=author,
+                            content=msg.content,
+                            created_at=msg.date_created,
+                            edited_at=msg.date_last_edited,
+                        )
+                    )
+
         return BugRecord(
             provider_name=self.provider_name,
             id=str(lp_bug.id),
@@ -111,4 +132,5 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             last_patch_at=lp_bug.latest_patch_uploaded,
             tags=lp_bug.tags,
             bug_tasks=tasks,
+            comments=comments,
         )
