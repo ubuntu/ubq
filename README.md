@@ -2,3 +2,13 @@
 
 # Ubuntu Query
 Common Python library interface for interacting with services providing data on Ubuntu
+
+## Architecture
+
+ubq is separated into three sets of components - [models](src/ubq/models/README.md), [providers](src/ubq/providers/README.md), and [services](src/ubq/services/README.md).
+
+The models component contains standardized data types for data that can be extracted from providers.
+
+The providers component provides standardized classes for querying and sending information to external locations hosting Ubuntu-related data.
+
+The services component contains methods and classes for importing and exporting Ubuntu data.
