@@ -2,7 +2,9 @@
 """Fetch contents of a Launchpad bug by its ID."""
 
 import sys
+
 from lazr.restfulclient.errors import CredentialsFileError
+
 from ubq.models import AuthScope, ProviderCredentials
 from ubq.services import QueryService
 

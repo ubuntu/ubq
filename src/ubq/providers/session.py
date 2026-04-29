@@ -6,10 +6,7 @@ from typing import TYPE_CHECKING
 from ubq.models import AuthScope
 
 if TYPE_CHECKING:
-    from ubq.providers.bug import BugProvider
-    from ubq.providers.merge_request import MergeRequestProvider
-    from ubq.providers.package import PackageProvider
-    from ubq.providers.version import VersionProvider
+    from ubq.providers import BugProvider, MergeRequestProvider, PackageProvider, VersionProvider
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,10 +23,12 @@ class ProviderSession:
     def with_provider(self, provider: object) -> "ProviderSession":
         """Return a new session with any supported capabilities attached."""
 
-        from ubq.providers.bug import BugProvider
-        from ubq.providers.merge_request import MergeRequestProvider
-        from ubq.providers.package import PackageProvider
-        from ubq.providers.version import VersionProvider
+        from ubq.providers import (
+            BugProvider,
+            MergeRequestProvider,
+            PackageProvider,
+            VersionProvider,
+        )
 
         session = self
         if isinstance(provider, BugProvider):
