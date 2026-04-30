@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from ubq.models.common import CommentRecord, UserRecord
+from ubq.models.package import PackageRecord
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,3 +48,20 @@ class BugRecord:
     owner: UserRecord | None = None
     assignee: UserRecord | None = None
     bug_tasks: list[BugTaskRecord] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class BugSubmissionRecord:
+    """General bug submission information record."""
+
+    provider_name: str
+    title: str
+    packages: list[PackageRecord] = field(default_factory=list)
+    description: str | None = None
+    importance: str | None = None
+    status: str | None = None
+    tags: list[str] = field(default_factory=list)
+    subscribers: list[UserRecord] = field(default_factory=list)
+    assignee: UserRecord | None = None
+    private: bool = False
+    milestone: str | None = None

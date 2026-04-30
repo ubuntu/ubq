@@ -4,7 +4,7 @@ from typing import Any
 
 from lazr.restfulclient.errors import NotFound  # type: ignore[import-untyped]
 
-from ubq.models import BugRecord, BugTaskRecord, CommentRecord, UserRecord
+from ubq.models import BugRecord, BugSubmissionRecord, BugTaskRecord, CommentRecord, UserRecord
 from ubq.providers.bug import BugProvider
 from ubq.providers.launchpad.provider import LaunchpadProvider
 
@@ -124,4 +124,81 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             tags=lp_bug.tags,
             bug_tasks=tasks,
             comments=comments,
+        )
+
+    def submit_bug(self, submission: BugSubmissionRecord) -> "BugRecord | None":
+        """Submit a new bug to Launchpad and return the created record."""
+        self._check_authenticated()
+
+        if len(submission.packages) == 0:
+            raise ValueError("At least one Ubuntu package must be specified for bug submission.")
+
+        # Submit bug against the first package
+        created_lp_bug = self._launchpad.bugs.createBug(
+            title=submission.title,
+            description=submission.description or "",
+            target=submission.packages[0].name,
+            tags=submission.tags,
+            information_type="Private" if submission.private else "Public",
+        )
+
+        # Add all other affected packages
+        for pkg in submission.packages[1:]:
+            created_lp_bug.addTask(target=pkg.name)
+
+        # Set milestone, status, and importance for each task if specified
+        # Also fill out the task list for this bug as they are collected
+        bug_task_list: list[BugTaskRecord] = []
+
+        for lp_task in created_lp_bug.bug_tasks:
+            if submission.milestone is not None:
+                lp_task.milestone = submission.milestone
+
+            if submission.status is not None:
+                lp_task.status = submission.status
+
+            if submission.importance is not None:
+                lp_task.importance = submission.importance
+
+            if submission.assignee is not None:
+                lp_task.owner = submission.assignee.username
+
+            lp_task.lp_save()
+            bug_task_list.append(
+                BugTaskRecord(
+                    title=lp_task.title,
+                    target=lp_task.target,
+                    importance=lp_task.importance,
+                    status=lp_task.status,
+                    date_assigned=lp_task.date_assigned,
+                    date_closed=lp_task.date_closed,
+                    date_created=lp_task.date_created,
+                    date_left_closed=lp_task.date_left_closed,
+                    date_left_new=lp_task.date_left_new,
+                    date_incomplete=lp_task.date_incomplete,
+                    date_confirmed=lp_task.date_confirmed,
+                    date_triaged=lp_task.date_triaged,
+                    date_in_progress=lp_task.date_in_progress,
+                    date_fix_committed=lp_task.date_fix_committed,
+                    date_fix_released=lp_task.date_fix_released,
+                    milestone=lp_task.milestone.name if lp_task.milestone else None,
+                    assignee=submission.assignee,
+                )
+            )
+
+        # Add subscribers
+        for subscriber in submission.subscribers:
+            created_lp_bug.subscribe(person=subscriber.username)
+
+        return BugRecord(
+            provider_name=self.provider_name,
+            id=str(created_lp_bug.id),
+            title=created_lp_bug.title,
+            description=created_lp_bug.description,
+            created_at=created_lp_bug.date_created,
+            updated_at=created_lp_bug.date_last_updated,
+            last_message_at=created_lp_bug.date_last_message,
+            last_patch_at=created_lp_bug.latest_patch_uploaded,
+            tags=created_lp_bug.tags,
+            bug_tasks=bug_task_list,
         )

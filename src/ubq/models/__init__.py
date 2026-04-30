@@ -1,6 +1,6 @@
 """Generic Ubuntu data models."""
 
-from ubq.models.bug import BugRecord, BugTaskRecord
+from ubq.models.bug import BugRecord, BugSubmissionRecord, BugTaskRecord
 from ubq.models.common import (
     AuthContext,
     AuthScope,
@@ -19,6 +19,7 @@ __all__ = [
     "CommentRecord",
     "UserRecord",
     "BugRecord",
+    "BugSubmissionRecord",
     "BugTaskRecord",
     "VersionRecord",
     "PackageRecord",

@@ -12,7 +12,9 @@ class LaunchpadPackageProvider(LaunchpadProvider, PackageProvider):
         """Fetch a Launchpad package by name."""
         self._check_authenticated()
 
-        source_package = self._launchpad.distributions["ubuntu"].getSourcePackage(name=package_name)
+        source_package = self._launchpad.distributions["ubuntu"].getSourcePackage(
+            name=package_name
+        )
 
         if source_package is None:
             return None

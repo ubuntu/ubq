@@ -8,6 +8,7 @@ from ubq.models import (
     ProviderCredentials,
     VersionRecord,
 )
+from ubq.models.bug import BugSubmissionRecord
 from ubq.services.registry import ProviderRegistry
 
 
@@ -77,6 +78,15 @@ class QueryService:
         """Fetch a merge request using an active scoped session."""
         provider = self._registry.get_merge_request_provider(provider_name, scope=scope)
         return provider.get_merge_request(merge_request_id)
+
+    def submit_bug(
+        self,
+        submission: BugSubmissionRecord,
+        provider_name: str,
+    ) -> "BugRecord | None":
+        """Submit a new bug to a provider using an active scoped session."""
+        provider = self._registry.get_bug_provider(provider_name, scope=AuthScope.READ_WRITE)
+        return provider.submit_bug(submission)
 
     def available_providers(self) -> tuple[str, ...]:
         """Return all provider names queryable by this service."""
