@@ -1,12 +1,18 @@
 """Common interface for authenticated provider sessions."""
 
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ubq.models import AuthScope
 
 if TYPE_CHECKING:
-    from ubq.providers import BugProvider, MergeRequestProvider, PackageProvider, VersionProvider
+    from ubq.providers import (
+        BugProvider,
+        MergeRequestProvider,
+        PackageProvider,
+        Provider,
+        VersionProvider,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,8 +25,9 @@ class ProviderSession:
     version_provider: "VersionProvider | None" = None
     package_provider: "PackageProvider | None" = None
     merge_request_provider: "MergeRequestProvider | None" = None
+    session_object: Any = None
 
-    def with_provider(self, provider: object) -> "ProviderSession":
+    def with_provider(self, provider: "Provider") -> "ProviderSession":
         """Return a new session with any supported capabilities attached."""
 
         from ubq.providers import (
@@ -29,6 +36,9 @@ class ProviderSession:
             PackageProvider,
             VersionProvider,
         )
+
+        if self.session_object is not None:
+            provider.set_session_object(self.session_object)
 
         session = self
         if isinstance(provider, BugProvider):

@@ -1,5 +1,7 @@
 """Shared Launchpad provider base classes."""
 
+from typing import Any
+
 from launchpadlib.credentials import Credentials  # type: ignore[import-untyped]
 from launchpadlib.launchpad import Launchpad  # type: ignore[import-untyped]
 
@@ -49,4 +51,17 @@ class LaunchpadProvider:
         return ProviderSession(
             provider_name=self.provider_name,
             scope=auth_context.scope,
+            session_object=self._launchpad,
         ).with_provider(self)
+
+    def get_session_object(self) -> Launchpad | None:
+        """Return the underlying Launchpad session object if available."""
+        self._check_authenticated()
+        return self._launchpad
+
+    def set_session_object(self, session_object: Any) -> None:
+        """Set the underlying Launchpad session object."""
+        if not isinstance(session_object, Launchpad):
+            raise ValueError("Expected a Launchpad session object.")
+
+        self._launchpad = session_object
