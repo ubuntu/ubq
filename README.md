@@ -12,3 +12,11 @@ The models component contains standardized data types for data that can be extra
 The providers component provides standardized classes for querying and sending information to external locations hosting Ubuntu-related data.
 
 The services component contains methods and classes for importing and exporting Ubuntu data.
+
+## Scripts
+
+This repository includes a scripts directory for simple tools and examples for interacting with ubq. They can be run using uv:
+
+```bash
+uv run scripts/<script_name> [args]
+```
