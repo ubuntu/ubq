@@ -9,3 +9,4 @@ class PackageRecord:
 
     provider_name: str
     name: str
+    package_url: str | None = None
