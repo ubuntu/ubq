@@ -8,7 +8,6 @@ from ubq.models import BugRecord, BugTaskRecord, CommentRecord, UserRecord
 from ubq.providers.bug import BugProvider
 from ubq.providers.launchpad.provider import LaunchpadProvider
 
-BASE_BUG_URL = "https://api.launchpad.net/devel/ubuntu/+bug/"
 BASE_USER_URL = "https://launchpad.net/~"
 
 
@@ -20,18 +19,9 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         self._check_authenticated()
 
         try:
-            lp_object = self._launchpad.load(BASE_BUG_URL + bug_id)
-        except NotFound:
+            return self._launchpad.bugs[bug_id]
+        except KeyError:
             return None
-
-        # Launchpad will sometimes return default bug_task for a bug, if so it needs to be
-        # converted to a bug explicitly. Otherwise assume it's already a bug.
-        try:
-            lp_bug = lp_object.bug
-        except AttributeError:
-            lp_bug = lp_object
-
-        return lp_bug
 
     def get_bug_task_by_url(self, task_url: str) -> "BugTaskRecord | None":
         """Fetch a Launchpad bug task by URL."""
