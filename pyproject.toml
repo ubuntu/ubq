@@ -28,6 +28,9 @@ lint = [
     "pylint>=4.0.5",
     "pyproject-flake8>=7.0.0",
 ]
+test = [
+    "pytest>=9.0.3",
+]
 
 [build-system]
 requires = ["hatchling"]
