@@ -63,6 +63,70 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         ):
             raise ValueError(f"Invalid bug importance provided: '{submission.importance}'.")
 
+    def _add_bug_tasks(
+        self, bug_id: str, submission: BugSubmissionRecord
+    ) -> "list[BugTaskRecord] | None":
+        """Add tasks to an existing Launchpad bug."""
+        lp_bug = self._fetch_lp_bug_by_id(bug_id)
+        if lp_bug is None:
+            return None
+
+        new_tasks: list["BugTaskRecord"] = []
+        for pkg_name in submission.package_names:
+            lp_package = self._get_lp_source_package_object(pkg_name)
+            if lp_package is None:
+                raise ValueError(f"Package '{pkg_name}' not found in Launchpad.")
+            new_lp_task = lp_bug.addTask(target=lp_package)
+
+        lp_milestone = None
+        if submission.milestone is not None:
+            lp_milestone = self._launchpad.distributions["ubuntu"].getMilestone(
+                name=submission.milestone
+            )
+
+        lp_assignee = None
+        if submission.assignee is not None:
+            lp_assignee = self._launchpad.people[submission.assignee.username]
+
+        # Set owner, milestone, status, and importance for each new task if specified
+        for lp_task in lp_bug.bug_tasks:
+            if lp_milestone is not None:
+                lp_task.milestone = lp_milestone
+
+            if submission.status is not None:
+                lp_task.status = submission.status
+
+            if submission.importance is not None:
+                lp_task.importance = submission.importance
+
+            if lp_assignee is not None:
+                lp_task.assignee = lp_assignee
+
+            lp_task.lp_save()
+
+            new_tasks.append(
+                BugTaskRecord(
+                    title=new_lp_task.title,
+                    target=new_lp_task.target,
+                    importance=new_lp_task.importance,
+                    status=new_lp_task.status,
+                    date_assigned=new_lp_task.date_assigned,
+                    date_closed=new_lp_task.date_closed,
+                    date_created=new_lp_task.date_created,
+                    date_left_closed=new_lp_task.date_left_closed,
+                    date_left_new=new_lp_task.date_left_new,
+                    date_incomplete=new_lp_task.date_incomplete,
+                    date_confirmed=new_lp_task.date_confirmed,
+                    date_triaged=new_lp_task.date_triaged,
+                    date_in_progress=new_lp_task.date_in_progress,
+                    date_fix_committed=new_lp_task.date_fix_committed,
+                    date_fix_released=new_lp_task.date_fix_released,
+                    milestone=new_lp_task.milestone.name if new_lp_task.milestone else None,
+                )
+            )
+
+        return new_tasks
+
     def get_bug_task_by_url(self, task_url: str) -> "BugTaskRecord | None":
         """Fetch a Launchpad bug task by URL."""
         self._check_authenticated()
@@ -185,62 +249,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             private=submission.private,
         )
 
-        # Add all other affected packages
-        for pkg_name in submission.package_names[1:]:
-            lp_package = self._get_lp_source_package_object(pkg_name)
-            if lp_package is None:
-                raise ValueError(f"Package '{pkg_name}' not found in Launchpad.")
-            created_lp_bug.addTask(target=lp_package)
-
-        lp_milestone = None
-        if submission.milestone is not None:
-            lp_milestone = self._launchpad.distributions["ubuntu"].getMilestone(
-                name=submission.milestone
-            )
-
-        lp_owner = None
-        if submission.assignee is not None:
-            lp_owner = self._launchpad.people[submission.assignee.username]
-
-        # Set milestone, status, and importance for each task if specified
-        # Also fill out the task list for this bug as they are collected
-        bug_task_list: list[BugTaskRecord] = []
-
-        for lp_task in created_lp_bug.bug_tasks:
-            if lp_milestone is not None:
-                lp_task.milestone = lp_milestone
-
-            if submission.status is not None:
-                lp_task.status = submission.status
-
-            if submission.importance is not None:
-                lp_task.importance = submission.importance
-
-            if lp_owner is not None:
-                lp_task.owner = lp_owner
-
-            lp_task.lp_save()
-            bug_task_list.append(
-                BugTaskRecord(
-                    title=lp_task.title,
-                    target=lp_task.target,
-                    importance=lp_task.importance,
-                    status=lp_task.status,
-                    date_assigned=lp_task.date_assigned,
-                    date_closed=lp_task.date_closed,
-                    date_created=lp_task.date_created,
-                    date_left_closed=lp_task.date_left_closed,
-                    date_left_new=lp_task.date_left_new,
-                    date_incomplete=lp_task.date_incomplete,
-                    date_confirmed=lp_task.date_confirmed,
-                    date_triaged=lp_task.date_triaged,
-                    date_in_progress=lp_task.date_in_progress,
-                    date_fix_committed=lp_task.date_fix_committed,
-                    date_fix_released=lp_task.date_fix_released,
-                    milestone=lp_task.milestone.name if lp_task.milestone else None,
-                    assignee=submission.assignee,
-                )
-            )
+        tasks = self._add_bug_tasks(str(created_lp_bug.id), submission)
 
         # Add subscribers
         for subscriber in submission.subscribers:
@@ -256,5 +265,5 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             last_message_at=created_lp_bug.date_last_message,
             last_patch_at=created_lp_bug.latest_patch_uploaded,
             tags=created_lp_bug.tags,
-            bug_tasks=bug_task_list,
+            bug_tasks=tasks if tasks is not None else [],
         )
