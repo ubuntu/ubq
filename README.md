@@ -1,4 +1,5 @@
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![PyPI - Version](https://img.shields.io/pypi/v/ubq)
+ [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # Ubuntu Query
 Common Python library interface for interacting with services providing data on Ubuntu
