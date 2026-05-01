@@ -21,3 +21,11 @@ This repository includes a scripts directory for simple tools and examples for i
 ```bash
 uv run scripts/<script_name> [args]
 ```
+
+## Testing
+
+Run unit tests and lint using `tox-uv`:
+
+```bash
+uvx tox
+```
