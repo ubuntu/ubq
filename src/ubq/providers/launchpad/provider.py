@@ -22,6 +22,15 @@ class LaunchpadProvider:
         if self._launchpad is None:
             raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
 
+    def _get_lp_source_package_object(self, package_name: str) -> Any:
+        """Fetch a Launchpad source package object by name."""
+        self._check_authenticated()
+
+        try:
+            return self._launchpad.distributions["ubuntu"].getSourcePackage(name=package_name)
+        except KeyError:
+            return None
+
     def authenticate(self, auth_context: AuthContext) -> "ProviderSession":
         """Authenticate with Launchpad and return a reusable session."""
         if auth_context.credentials is not None and auth_context.credentials.token is not None:

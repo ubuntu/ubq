@@ -127,17 +127,13 @@ def main():
         print(f"Invalid credentials file: {e}", file=sys.stderr)
         sys.exit(1)
 
-    packages = [
-        service.get_package(pkg, "launchpad", AuthScope.READ_WRITE) for pkg in args["packages"]
-    ]
-
     assignee = UserRecord(username=args["assignee"]) if args["assignee"] else None
     subscribers = [UserRecord(username=u) for u in args["subscribers"]]
 
     submission = BugSubmissionRecord(
         provider_name="launchpad",
         title=args["title"],
-        packages=packages,
+        package_names=args["packages"],
         description=args["description"],
         importance=args["importance"],
         status=args["status"],
@@ -154,12 +150,12 @@ def main():
         print("Bug submission failed.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Bug submitted successfully!")
+    print("Bug submitted successfully!")
     print(f"  ID:    {bug.id}")
     print(f"  Title: {bug.title}")
     print(f"  Tags:  {bug.tags}")
     if bug.bug_tasks:
-        print(f"  Tasks:")
+        print("  Tasks:")
         for task in bug.bug_tasks:
             print(f"    - {task.title} [{task.status} / {task.importance}]")
 

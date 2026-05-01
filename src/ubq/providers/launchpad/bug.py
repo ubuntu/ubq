@@ -9,6 +9,32 @@ from ubq.providers.bug import BugProvider
 from ubq.providers.launchpad.provider import LaunchpadProvider
 
 BASE_USER_URL = "https://launchpad.net/~"
+VALID_BUG_STATUSES = {
+    "New",
+    "Incomplete",
+    "Opinion",
+    "Invalid",
+    "Won\\'t Fix",
+    "Expired",
+    "Confirmed",
+    "Triaged",
+    "In Progress",
+    "Deferred",
+    "Fix Committed",
+    "Fix Released",
+    "Does Not Exist",
+    "Unknown",
+}
+
+VALID_BUG_IMPORTANCES = {
+    "Unknown",
+    "Undecided",
+    "Critical",
+    "High",
+    "Medium",
+    "Low",
+    "Wishlist",
+}
 
 
 class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
@@ -22,6 +48,20 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             return self._launchpad.bugs[bug_id]
         except KeyError:
             return None
+
+    def _validate_bug_submission(self, submission: BugSubmissionRecord) -> None:
+        """Validate a bug submission record and raise ValueError if invalid."""
+        if len(submission.package_names) == 0:
+            raise ValueError("At least one Ubuntu package must be specified for bug submission.")
+
+        if submission.status is not None and submission.status not in VALID_BUG_STATUSES:
+            raise ValueError(f"Invalid bug status provided: '{submission.status}'.")
+
+        if (
+            submission.importance is not None
+            and submission.importance not in VALID_BUG_IMPORTANCES
+        ):
+            raise ValueError(f"Invalid bug importance provided: '{submission.importance}'.")
 
     def get_bug_task_by_url(self, task_url: str) -> "BugTaskRecord | None":
         """Fetch a Launchpad bug task by URL."""
@@ -129,30 +169,46 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
     def submit_bug(self, submission: BugSubmissionRecord) -> "BugRecord | None":
         """Submit a new bug to Launchpad and return the created record."""
         self._check_authenticated()
+        self._validate_bug_submission(submission)
 
-        if len(submission.packages) == 0:
-            raise ValueError("At least one Ubuntu package must be specified for bug submission.")
+        first_package = self._get_lp_source_package_object(submission.package_names[0])
+        if first_package is None:
+            raise ValueError(f"Package '{submission.package_names[0]}' not found in Launchpad.")
 
         # Submit bug against the first package
         created_lp_bug = self._launchpad.bugs.createBug(
             title=submission.title,
             description=submission.description or "",
-            target=submission.packages[0].name,
+            target=first_package,
             tags=submission.tags,
             information_type="Private" if submission.private else "Public",
+            private=submission.private,
         )
 
         # Add all other affected packages
-        for pkg in submission.packages[1:]:
-            created_lp_bug.addTask(target=pkg.name)
+        for pkg_name in submission.package_names[1:]:
+            lp_package = self._get_lp_source_package_object(pkg_name)
+            if lp_package is None:
+                raise ValueError(f"Package '{pkg_name}' not found in Launchpad.")
+            created_lp_bug.addTask(target=lp_package)
+
+        lp_milestone = None
+        if submission.milestone is not None:
+            lp_milestone = self._launchpad.distributions["ubuntu"].getMilestone(
+                name=submission.milestone
+            )
+
+        lp_owner = None
+        if submission.assignee is not None:
+            lp_owner = self._launchpad.people[submission.assignee.username]
 
         # Set milestone, status, and importance for each task if specified
         # Also fill out the task list for this bug as they are collected
         bug_task_list: list[BugTaskRecord] = []
 
         for lp_task in created_lp_bug.bug_tasks:
-            if submission.milestone is not None:
-                lp_task.milestone = submission.milestone
+            if lp_milestone is not None:
+                lp_task.milestone = lp_milestone
 
             if submission.status is not None:
                 lp_task.status = submission.status
@@ -160,8 +216,8 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             if submission.importance is not None:
                 lp_task.importance = submission.importance
 
-            if submission.assignee is not None:
-                lp_task.owner = submission.assignee.username
+            if lp_owner is not None:
+                lp_task.owner = lp_owner
 
             lp_task.lp_save()
             bug_task_list.append(
