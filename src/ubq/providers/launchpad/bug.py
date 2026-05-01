@@ -42,10 +42,10 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
     def _fetch_lp_bug_by_id(self, bug_id: str) -> Any:
         """Load a Launchpad URL and attempt to convert it to arbitrary bug data."""
-        self._check_authenticated()
+        lp = self._get_lp_object()
 
         try:
-            return self._launchpad.bugs[bug_id]
+            return lp.bugs[bug_id]
         except KeyError:
             return None
 
@@ -63,15 +63,13 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         ):
             raise ValueError(f"Invalid bug importance provided: '{submission.importance}'.")
 
-    def _add_bug_tasks(
-        self, bug_id: str, submission: BugSubmissionRecord
-    ) -> "list[BugTaskRecord] | None":
+    def _add_bug_tasks(self, bug_id: str, submission: BugSubmissionRecord) -> list[BugTaskRecord]:
         """Add tasks to an existing Launchpad bug."""
         lp_bug = self._fetch_lp_bug_by_id(bug_id)
         if lp_bug is None:
-            return None
+            return []
 
-        new_tasks: list["BugTaskRecord"] = []
+        new_tasks: list[BugTaskRecord] = []
         for pkg_name in submission.package_names:
             lp_package = self._get_lp_source_package_object(pkg_name)
             if lp_package is None:
@@ -80,13 +78,13 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
         lp_milestone = None
         if submission.milestone is not None:
-            lp_milestone = self._launchpad.distributions["ubuntu"].getMilestone(
+            lp_milestone = self._get_lp_ubuntu_distro_object().getMilestone(
                 name=submission.milestone
             )
 
         lp_assignee = None
         if submission.assignee is not None:
-            lp_assignee = self._launchpad.people[submission.assignee.username]
+            lp_assignee = self._get_lp_object().people[submission.assignee.username]
 
         # Set owner, milestone, status, and importance for each new task if specified
         for lp_task in lp_bug.bug_tasks:
@@ -127,12 +125,12 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
         return new_tasks
 
-    def get_bug_task_by_url(self, task_url: str) -> "BugTaskRecord | None":
+    def get_bug_task_by_url(self, task_url: str) -> BugTaskRecord | None:
         """Fetch a Launchpad bug task by URL."""
-        self._check_authenticated()
+        lp = self._get_lp_object()
 
         try:
-            lp_task = self._launchpad.load(task_url)
+            lp_task = lp.load(task_url)
         except NotFound:
             return None
 
@@ -164,7 +162,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             assignee=assignee,
         )
 
-    def get_bug_metadata(self, bug_id: str) -> "BugRecord | None":
+    def get_bug_metadata(self, bug_id: str) -> BugRecord | None:
         """Fetch a Launchpad bug without comments or tasks."""
         lp_bug = self._fetch_lp_bug_by_id(bug_id)
         if lp_bug is None:
@@ -182,20 +180,20 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             tags=lp_bug.tags,
         )
 
-    def get_bug(self, bug_id: str) -> "BugRecord | None":
+    def get_bug(self, bug_id: str) -> BugRecord | None:
         """Fetch a Launchpad bug by identifier."""
         lp_bug = self._fetch_lp_bug_by_id(bug_id)
         if lp_bug is None:
             return None
 
-        tasks: list["BugTaskRecord"] = []
+        tasks: list[BugTaskRecord] = []
         if hasattr(lp_bug, "bug_tasks"):
             for task in lp_bug.bug_tasks:
                 task_record = self.get_bug_task_by_url(str(task))
                 if task_record is not None:
                     tasks.append(task_record)
 
-        comments: list["CommentRecord"] = []
+        comments: list[CommentRecord] = []
         if hasattr(lp_bug, "messages"):
             for msg in lp_bug.messages:
                 if msg.visible:
@@ -230,9 +228,8 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             comments=comments,
         )
 
-    def submit_bug(self, submission: BugSubmissionRecord) -> "BugRecord | None":
+    def submit_bug(self, submission: BugSubmissionRecord) -> BugRecord | None:
         """Submit a new bug to Launchpad and return the created record."""
-        self._check_authenticated()
         self._validate_bug_submission(submission)
 
         first_package = self._get_lp_source_package_object(submission.package_names[0])
@@ -240,7 +237,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             raise ValueError(f"Package '{submission.package_names[0]}' not found in Launchpad.")
 
         # Submit bug against the first package
-        created_lp_bug = self._launchpad.bugs.createBug(
+        created_lp_bug = self._get_lp_object().bugs.createBug(
             title=submission.title,
             description=submission.description or "",
             target=first_package,

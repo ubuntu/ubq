@@ -12,26 +12,35 @@ from ubq.providers.session import ProviderSession
 class LaunchpadProvider:
     """Common Launchpad provider behavior shared by capability adapters."""
 
-    provider_name = "launchpad"
+    provider_name: str = "launchpad"
 
-    def __init__(self):
-        self._launchpad = None
+    def __init__(self) -> None:
+        self._launchpad: Launchpad | None = None
 
-    def _check_authenticated(self) -> None:
-        """Check if provider session is authenticated and raise if not."""
+    def _get_lp_object(self) -> Launchpad:
+        """Return the authenticated Launchpad session object or raise if not authenticated."""
         if self._launchpad is None:
             raise RuntimeError("Launchpad not yet authenticated. Run 'authenticate()' first.")
 
+        return self._launchpad
+
+    def _get_lp_ubuntu_distro_object(self) -> Any:
+        """Fetch the Launchpad Ubuntu distribution object."""
+        lp = self._get_lp_object()
+
+        if not hasattr(lp, "distributions"):
+            raise RuntimeError("Launchpad session does not have 'distributions' attribute.")
+
+        return lp.distributions["ubuntu"]
+
     def _get_lp_source_package_object(self, package_name: str) -> Any:
         """Fetch a Launchpad source package object by name."""
-        self._check_authenticated()
-
         try:
-            return self._launchpad.distributions["ubuntu"].getSourcePackage(name=package_name)
+            return self._get_lp_ubuntu_distro_object().getSourcePackage(name=package_name)
         except KeyError:
             return None
 
-    def authenticate(self, auth_context: AuthContext) -> "ProviderSession":
+    def authenticate(self, auth_context: AuthContext) -> ProviderSession:
         """Authenticate with Launchpad and return a reusable session."""
         if auth_context.credentials is not None and auth_context.credentials.token is not None:
             credentials = Credentials.from_string(auth_context.credentials.token)
@@ -65,7 +74,6 @@ class LaunchpadProvider:
 
     def get_session_object(self) -> Launchpad | None:
         """Return the underlying Launchpad session object if available."""
-        self._check_authenticated()
         return self._launchpad
 
     def set_session_object(self, session_object: Any) -> None:

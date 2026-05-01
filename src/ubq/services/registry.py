@@ -85,12 +85,17 @@ class ProviderRegistry:
         scope: AuthScope = AuthScope.READ_ONLY,
     ) -> BugProvider:
         """Return bug provider for an active scoped session."""
-        return self._capability_from_session(
+        capability = self._capability_from_session(
             provider_name,
             scope,
             "bug",
             lambda session: session.get_bug_provider(),
         )
+
+        if not isinstance(capability, BugProvider):
+            raise ValueError("The capability returned is not a BugProvider.")
+
+        return capability
 
     def get_version_provider(
         self,
@@ -98,12 +103,17 @@ class ProviderRegistry:
         scope: AuthScope = AuthScope.READ_ONLY,
     ) -> VersionProvider:
         """Return version provider for an active scoped session."""
-        return self._capability_from_session(
+        capability = self._capability_from_session(
             provider_name,
             scope,
             "version",
             lambda session: session.get_version_provider(),
         )
+
+        if not isinstance(capability, VersionProvider):
+            raise ValueError("The capability returned is not a VersionProvider.")
+
+        return capability
 
     def get_package_provider(
         self,
@@ -111,12 +121,17 @@ class ProviderRegistry:
         scope: AuthScope = AuthScope.READ_ONLY,
     ) -> PackageProvider:
         """Return package provider for an active scoped session."""
-        return self._capability_from_session(
+        capability = self._capability_from_session(
             provider_name,
             scope,
             "package",
             lambda session: session.get_package_provider(),
         )
+
+        if not isinstance(capability, PackageProvider):
+            raise ValueError("The capability returned is not a PackageProvider.")
+
+        return capability
 
     def get_merge_request_provider(
         self,
@@ -124,12 +139,17 @@ class ProviderRegistry:
         scope: AuthScope = AuthScope.READ_ONLY,
     ) -> MergeRequestProvider:
         """Return merge request provider for an active scoped session."""
-        return self._capability_from_session(
+        capability = self._capability_from_session(
             provider_name,
             scope,
             "merge request",
             lambda session: session.get_merge_request_provider(),
         )
+
+        if not isinstance(capability, MergeRequestProvider):
+            raise ValueError("The capability returned is not a MergeRequestProvider.")
+
+        return capability
 
     def available_provider_names(self) -> tuple[str, ...]:
         """List all registered provider names."""
@@ -163,8 +183,8 @@ class ProviderRegistry:
         provider_name: str,
         scope: AuthScope,
         capability_name: str,
-        getter: Callable[[ProviderSession], object | None],
-    ):
+        getter: Callable[[ProviderSession], Provider | None],
+    ) -> Provider:
         """Return capability from an active session or raise error."""
         session = self.get_session(provider_name, scope)
         capability = getter(session)

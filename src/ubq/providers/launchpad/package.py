@@ -10,8 +10,6 @@ class LaunchpadPackageProvider(LaunchpadProvider, PackageProvider):
 
     def get_package(self, package_name: str) -> "PackageRecord | None":
         """Fetch a Launchpad package by name."""
-        self._check_authenticated()
-
         source_package = self._get_lp_source_package_object(package_name)
 
         if source_package is None:

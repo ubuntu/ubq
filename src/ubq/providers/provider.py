@@ -12,7 +12,7 @@ class Provider(Protocol):
 
     provider_name: str
 
-    def authenticate(self, auth_context: AuthContext) -> "ProviderSession":
+    def authenticate(self, auth_context: AuthContext) -> ProviderSession:
         """Authenticate against provider and return a reusable session."""
 
     def get_session_object(self) -> Any:
