@@ -51,13 +51,14 @@ class QueryService:
     def get_version(
         self,
         package_name: str,
+        series: str,
         pocket: str,
         provider_name: str,
         scope: AuthScope = AuthScope.READ_ONLY,
     ) -> VersionRecord | None:
         """Fetch package version metadata using an active scoped session."""
         provider = self._registry.get_version_provider(provider_name, scope=scope)
-        return provider.get_version(package_name, pocket)
+        return provider.get_version(package_name, series, pocket)
 
     def get_package(
         self,

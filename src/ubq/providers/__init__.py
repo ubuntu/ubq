@@ -3,6 +3,7 @@
 from ubq.providers.bug import BugProvider
 from ubq.providers.launchpad.bug import LaunchpadBugProvider
 from ubq.providers.launchpad.package import LaunchpadPackageProvider
+from ubq.providers.launchpad.version import LaunchpadVersionProvider
 from ubq.providers.merge_request import MergeRequestProvider
 from ubq.providers.package import PackageProvider
 from ubq.providers.provider import Provider
@@ -18,4 +19,5 @@ __all__ = [
     "MergeRequestProvider",
     "LaunchpadBugProvider",
     "LaunchpadPackageProvider",
+    "LaunchpadVersionProvider",
 ]

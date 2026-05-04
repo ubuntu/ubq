@@ -7,6 +7,7 @@ from ubq.providers import (
     BugProvider,
     LaunchpadBugProvider,
     LaunchpadPackageProvider,
+    LaunchpadVersionProvider,
     MergeRequestProvider,
     PackageProvider,
     Provider,
@@ -27,6 +28,7 @@ class ProviderRegistry:
         initial_providers = providers or (
             LaunchpadBugProvider(),
             LaunchpadPackageProvider(),
+            LaunchpadVersionProvider(),
         )
 
         for provider in initial_providers:
