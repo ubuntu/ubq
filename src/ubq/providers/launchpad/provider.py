@@ -6,10 +6,11 @@ from launchpadlib.credentials import Credentials  # type: ignore[import-untyped]
 from launchpadlib.launchpad import Launchpad  # type: ignore[import-untyped]
 
 from ubq.models import AuthContext, AuthScope
+from ubq.providers.provider import Provider
 from ubq.providers.session import ProviderSession
 
 
-class LaunchpadProvider:
+class LaunchpadProvider(Provider):
     """Common Launchpad provider behavior shared by capability adapters."""
 
     provider_name: str = "launchpad"
