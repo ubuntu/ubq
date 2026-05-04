@@ -12,7 +12,8 @@ class VersionRecord:
 
     provider_name: str
     version_string: str
-    package: PackageRecord | None = None
+    package_name: str
+    series: str | None = None
     pocket: str | None = None
     created_at: datetime | None = None
     released_at: datetime | None = None
