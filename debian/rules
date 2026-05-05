@@ -1,0 +1,6 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=ubq
+
+%:
+	dh $@ --buildsystem=pybuild
