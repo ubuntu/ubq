@@ -55,4 +55,6 @@ disable = [
     "R0903", # Too few public methods
     "R0902", # Too many instance attributes
     "C0415", # Import outside toplevel
+    "R0913", # Too many arguments
+    "R0917", # Too many local variables
 ]

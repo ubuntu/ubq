@@ -24,7 +24,8 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
 
         if pocket not in VALID_LP_POCKETS:
             raise ValueError(
-                f"Invalid Ubuntu pocket: '{pocket}'. Valid pockets are: {', '.join(VALID_LP_POCKETS)}."
+                f"Invalid Ubuntu pocket: '{pocket}'."
+                f" Valid pockets are: {', '.join(VALID_LP_POCKETS)}."
             )
 
         if series.startswith("debian"):

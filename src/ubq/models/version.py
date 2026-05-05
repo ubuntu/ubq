@@ -3,8 +3,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from ubq.models.package import PackageRecord
-
 
 @dataclass(frozen=True, slots=True)
 class VersionRecord:
