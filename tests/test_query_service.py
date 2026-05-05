@@ -56,12 +56,13 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
             )
         }
         self._packages: dict[str, PackageRecord] = {"test-package": package}
-        self._versions: dict[tuple[str, str], VersionRecord] = {
-            ("test-package", "release"): VersionRecord(
+        self._versions: dict[tuple[str, str, str], VersionRecord] = {
+            ("test-package", "resolute", "Release"): VersionRecord(
                 provider_name=self.provider_name,
                 version_string="1.2.3",
-                package=package,
-                pocket="release",
+                package_name=package.name,
+                series="resolute",
+                pocket="Release",
                 created_at=now,
                 released_at=now,
             )
@@ -117,9 +118,9 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self._bugs[bug_id] = created
         return created
 
-    def get_version(self, package_name: str, pocket: str) -> VersionRecord | None:
-        self.version_calls.append((package_name, pocket))
-        return self._versions.get((package_name, pocket))
+    def get_version(self, package_name: str, series: str, pocket: str) -> VersionRecord | None:
+        self.version_calls.append((package_name, series, pocket))
+        return self._versions.get((package_name, series, pocket))
 
     def get_package(self, package_name: str) -> PackageRecord | None:
         self.package_calls.append(package_name)
@@ -180,7 +181,8 @@ class QueryServiceTests(unittest.TestCase):
         package = self.service.get_package(package_name="test-package", provider_name="fake")
         version = self.service.get_version(
             package_name="test-package",
-            pocket="release",
+            series="resolute",
+            pocket="Release",
             provider_name="fake",
         )
         merge_request = self.service.get_merge_request(
@@ -192,7 +194,7 @@ class QueryServiceTests(unittest.TestCase):
         self.assertIsNotNone(version)
         self.assertIsNotNone(merge_request)
         self.assertEqual(["test-package"], self.provider.package_calls)
-        self.assertEqual([("test-package", "release")], self.provider.version_calls)
+        self.assertEqual([("test-package", "resolute", "Release")], self.provider.version_calls)
         self.assertEqual(["17"], self.provider.merge_request_calls)
 
     def test_submit_bug_uses_read_write_scope(self) -> None:
