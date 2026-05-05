@@ -136,10 +136,11 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
         assignee = None
         if hasattr(lp_task, "assignee"):
+            assignee_data = lp_task.assignee
             assignee = UserRecord(
-                username=lp_task.assignee.name,
-                display_name=lp_task.assignee.display_name,
-                profile_url=f"{BASE_USER_URL}{lp_task.assignee.name}",
+                username=assignee_data.name,
+                display_name=assignee_data.display_name,
+                profile_url=f"{BASE_USER_URL}{assignee_data.name}",
             )
 
         return BugTaskRecord(
@@ -199,10 +200,11 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                 if msg.visible:
                     author = None
                     if hasattr(msg, "owner") and msg.owner is not None:
+                        owner_data = msg.owner
                         author = UserRecord(
-                            username=msg.owner.name,
-                            display_name=msg.owner.display_name,
-                            profile_url=f"{BASE_USER_URL}{msg.owner.name}",
+                            username=owner_data.name,
+                            display_name=owner_data.display_name,
+                            profile_url=f"{BASE_USER_URL}{owner_data.name}",
                         )
 
                     comments.append(
