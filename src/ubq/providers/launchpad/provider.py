@@ -9,6 +9,8 @@ from ubq.models import AuthContext, AuthScope
 from ubq.providers.provider import Provider
 from ubq.providers.session import ProviderSession
 
+LP_BASE_USER_URL = "https://launchpad.net/~"
+
 
 class LaunchpadProvider(Provider):
     """Common Launchpad provider behavior shared by capability adapters."""

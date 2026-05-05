@@ -80,6 +80,16 @@ class QueryService:
         provider = self._registry.get_merge_request_provider(provider_name, scope=scope)
         return provider.get_merge_request(merge_request_id)
 
+    def get_merge_requests_from_user(
+        self,
+        user_id: str,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> list[MergeRequestRecord]:
+        """Fetch merge requests assigned to a user using an active scoped session."""
+        provider = self._registry.get_merge_request_provider(provider_name, scope=scope)
+        return provider.get_merge_requests_from_user(user_id)
+
     def submit_bug(
         self,
         submission: BugSubmissionRecord,

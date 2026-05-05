@@ -1,6 +1,6 @@
 """Merge request model records."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from ubq.models.common import UserRecord
@@ -20,7 +20,7 @@ class MergeRequestRecord:
     target_branch: str | None = None
     web_url: str | None = None
     author: UserRecord | None = None
-    assignee: UserRecord | None = None
+    assignees: list[UserRecord] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None
     merged_at: datetime | None = None

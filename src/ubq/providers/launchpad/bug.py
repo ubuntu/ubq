@@ -6,9 +6,8 @@ from lazr.restfulclient.errors import NotFound  # type: ignore[import-untyped]
 
 from ubq.models import BugRecord, BugSubmissionRecord, BugTaskRecord, CommentRecord, UserRecord
 from ubq.providers.bug import BugProvider
-from ubq.providers.launchpad.provider import LaunchpadProvider
+from ubq.providers.launchpad.provider import LP_BASE_USER_URL, LaunchpadProvider
 
-BASE_USER_URL = "https://launchpad.net/~"
 VALID_BUG_STATUSES = {
     "New",
     "Incomplete",
@@ -140,7 +139,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             assignee = UserRecord(
                 username=assignee_data.name,
                 display_name=assignee_data.display_name,
-                profile_url=f"{BASE_USER_URL}{assignee_data.name}",
+                profile_url=f"{LP_BASE_USER_URL}{assignee_data.name}",
             )
 
         return BugTaskRecord(
@@ -204,7 +203,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                         author = UserRecord(
                             username=owner_data.name,
                             display_name=owner_data.display_name,
-                            profile_url=f"{BASE_USER_URL}{owner_data.name}",
+                            profile_url=f"{LP_BASE_USER_URL}{owner_data.name}",
                         )
 
                     comments.append(

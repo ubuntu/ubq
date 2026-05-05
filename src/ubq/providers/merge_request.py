@@ -12,3 +12,6 @@ class MergeRequestProvider(Provider, Protocol):
 
     def get_merge_request(self, merge_request_id: str) -> MergeRequestRecord | None:
         """Fetch a merge request by provider-specific identifier."""
+
+    def get_merge_requests_from_user(self, user_id: str) -> list[MergeRequestRecord]:
+        """Fetch merge requests assigned to a specific user."""

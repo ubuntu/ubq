@@ -6,6 +6,7 @@ from ubq.models import AuthContext, AuthScope, ProviderCredentials
 from ubq.providers import (
     BugProvider,
     LaunchpadBugProvider,
+    LaunchpadMergeRequestProvider,
     LaunchpadPackageProvider,
     LaunchpadVersionProvider,
     MergeRequestProvider,
@@ -29,6 +30,7 @@ class ProviderRegistry:
             LaunchpadBugProvider(),
             LaunchpadPackageProvider(),
             LaunchpadVersionProvider(),
+            LaunchpadMergeRequestProvider(),
         )
 
         for provider in initial_providers:

@@ -42,6 +42,7 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self.package_calls: list[str] = []
         self.version_calls: list[tuple[str, str]] = []
         self.merge_request_calls: list[str] = []
+        self.assigned_merge_request_calls: list[str] = []
         self.submissions: list[BugSubmissionRecord] = []
 
         self._bugs: dict[str, BugRecord] = {
@@ -130,6 +131,10 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self.merge_request_calls.append(merge_request_id)
         return self._merge_requests.get(merge_request_id)
 
+    def get_merge_requests_from_user(self, user_id: str) -> list[MergeRequestRecord]:
+        self.assigned_merge_request_calls.append(user_id)
+        return list(self._merge_requests.values())
+
 
 class QueryServiceTests(unittest.TestCase):
     """Validate query service behavior against a deterministic provider."""
@@ -196,6 +201,17 @@ class QueryServiceTests(unittest.TestCase):
         self.assertEqual(["test-package"], self.provider.package_calls)
         self.assertEqual([("test-package", "resolute", "Release")], self.provider.version_calls)
         self.assertEqual(["17"], self.provider.merge_request_calls)
+
+    def test_get_merge_requests_from_user(self) -> None:
+        self.service.login(provider_name="fake")
+
+        merge_requests = self.service.get_merge_requests_from_user(
+            user_id="alice",
+            provider_name="fake",
+        )
+
+        self.assertEqual(1, len(merge_requests))
+        self.assertEqual(["alice"], self.provider.assigned_merge_request_calls)
 
     def test_submit_bug_uses_read_write_scope(self) -> None:
         submission = BugSubmissionRecord(
