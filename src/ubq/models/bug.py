@@ -50,6 +50,23 @@ class BugRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class BugSearchRecord:
+    """General bug information to use for searching."""
+
+    provider_name: str
+    title: str | None = None
+    tags: list[str] = field(default_factory=list)
+    created_before: datetime | None = None
+    created_since: datetime | None = None
+    modified_since: datetime | None = None
+    owner: UserRecord | None = None
+    assignee: UserRecord | None = None
+    milestone: str | None = None
+    status: str | None = None
+    importance: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class BugSubmissionRecord:
     """General bug submission information record."""
 

@@ -4,7 +4,14 @@ from typing import Any
 
 from lazr.restfulclient.errors import NotFound  # type: ignore[import-untyped]
 
-from ubq.models import BugRecord, BugSubmissionRecord, BugTaskRecord, CommentRecord, UserRecord
+from ubq.models import (
+    BugRecord,
+    BugSearchRecord,
+    BugSubmissionRecord,
+    BugTaskRecord,
+    CommentRecord,
+    UserRecord,
+)
 from ubq.providers.bug import BugProvider
 from ubq.providers.launchpad.provider import LP_BASE_USER_URL, LaunchpadProvider
 
@@ -179,6 +186,80 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             last_patch_at=lp_bug.latest_patch_uploaded,
             tags=lp_bug.tags,
         )
+
+    def search_bugs(self, query: BugSearchRecord) -> list[BugRecord]:
+        """Search Launchpad bugs using BugSearchRecord criteria."""
+        if query.status is not None and query.status not in VALID_BUG_STATUSES:
+            raise ValueError(f"Invalid bug status provided: '{query.status}'.")
+
+        if query.importance is not None and query.importance not in VALID_BUG_IMPORTANCES:
+            raise ValueError(f"Invalid bug importance provided: '{query.importance}'.")
+
+        search_params: dict[str, Any] = {}
+
+        if query.title is not None:
+            search_params["search_text"] = query.title
+
+        if query.tags:
+            search_params["tags"] = query.tags
+            search_params["tags_combinator"] = "All"
+
+        if query.created_before is not None:
+            search_params["created_before"] = query.created_before
+
+        if query.created_since is not None:
+            search_params["created_since"] = query.created_since
+
+        if query.modified_since is not None:
+            search_params["modified_since"] = query.modified_since
+
+        if query.owner is not None:
+            search_params["owner"] = self._get_lp_object().people[query.owner.username]
+
+        if query.assignee is not None:
+            search_params["assignee"] = self._get_lp_object().people[query.assignee.username]
+
+        if query.milestone is not None:
+            search_params["milestone"] = self._get_lp_ubuntu_distro_object().getMilestone(
+                name=query.milestone
+            )
+
+        if query.status is not None:
+            search_params["status"] = query.status
+
+        if query.importance is not None:
+            search_params["importance"] = query.importance
+
+        task_results = self._get_lp_object().bugs.searchTasks(**search_params)
+
+        bugs: list[BugRecord] = []
+        seen_bug_ids: set[str] = set()
+
+        for lp_task in task_results:
+            if not hasattr(lp_task, "bug") or lp_task.bug is None:
+                continue
+
+            lp_bug = lp_task.bug
+            bug_id = str(lp_bug.id)
+            if bug_id in seen_bug_ids:
+                continue
+            seen_bug_ids.add(bug_id)
+
+            bugs.append(
+                BugRecord(
+                    provider_name=self.provider_name,
+                    id=bug_id,
+                    title=lp_bug.title,
+                    description=lp_bug.description,
+                    created_at=lp_bug.date_created,
+                    updated_at=lp_bug.date_last_updated,
+                    last_message_at=lp_bug.date_last_message,
+                    last_patch_at=lp_bug.latest_patch_uploaded,
+                    tags=lp_bug.tags,
+                )
+            )
+
+        return bugs
 
     def get_bug(self, bug_id: str) -> BugRecord | None:
         """Fetch a Launchpad bug by identifier."""

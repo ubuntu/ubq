@@ -2,7 +2,7 @@
 
 from typing import Protocol, runtime_checkable
 
-from ubq.models import BugRecord, BugSubmissionRecord
+from ubq.models import BugRecord, BugSearchRecord, BugSubmissionRecord
 from ubq.providers.provider import Provider
 
 
@@ -15,6 +15,9 @@ class BugProvider(Provider, Protocol):
 
     def get_bug(self, bug_id: str) -> BugRecord | None:
         """Fetch a single bug by provider-specific identifier."""
+
+    def search_bugs(self, query: BugSearchRecord) -> list[BugRecord]:
+        """Search for bugs matching the given query parameters."""
 
     def submit_bug(self, submission: BugSubmissionRecord) -> BugRecord | None:
         """Submit a new bug to the provider and return the created record."""
