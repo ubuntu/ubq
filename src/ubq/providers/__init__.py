@@ -1,6 +1,9 @@
 """Provider interfaces and implementations."""
 
 from ubq.providers.bug import BugProvider
+from ubq.providers.github.bug import GitHubBugProvider
+from ubq.providers.github.merge_request import GitHubMergeRequestProvider
+from ubq.providers.github.provider import GitHubProvider
 from ubq.providers.launchpad.bug import LaunchpadBugProvider
 from ubq.providers.launchpad.merge_request import LaunchpadMergeRequestProvider
 from ubq.providers.launchpad.package import LaunchpadPackageProvider
@@ -18,6 +21,9 @@ __all__ = [
     "PackageProvider",
     "VersionProvider",
     "MergeRequestProvider",
+    "GitHubProvider",
+    "GitHubBugProvider",
+    "GitHubMergeRequestProvider",
     "LaunchpadBugProvider",
     "LaunchpadMergeRequestProvider",
     "LaunchpadPackageProvider",
