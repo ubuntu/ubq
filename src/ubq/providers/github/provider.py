@@ -98,7 +98,7 @@ class GitHubProvider:
         return ProviderSession(
             provider_name=self.provider_name,
             session_object=self._token,
-        )
+        ).with_provider(self)
 
     def get_session_object(self) -> Any:
         """Return the GitHub token used for authentication."""
