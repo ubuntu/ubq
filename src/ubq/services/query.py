@@ -3,6 +3,7 @@
 from ubq.models import (
     AuthScope,
     BugRecord,
+    BugSearchRecord,
     MergeRequestRecord,
     PackageRecord,
     ProviderCredentials,
@@ -98,6 +99,16 @@ class QueryService:
         """Submit a new bug to a provider using an active scoped session."""
         provider = self._registry.get_bug_provider(provider_name, scope=AuthScope.READ_WRITE)
         return provider.submit_bug(submission)
+
+    def search_bugs(
+        self,
+        query: BugSearchRecord,
+        provider_name: str,
+        scope: AuthScope = AuthScope.READ_ONLY,
+    ) -> list[BugRecord]:
+        """Search bugs using an active scoped session."""
+        provider = self._registry.get_bug_provider(provider_name, scope=scope)
+        return provider.search_bugs(query)
 
     def available_providers(self) -> tuple[str, ...]:
         """Return all provider names queryable by this service."""

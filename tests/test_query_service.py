@@ -7,6 +7,7 @@ from ubq.models import (
     AuthContext,
     AuthScope,
     BugRecord,
+    BugSearchRecord,
     BugSubmissionRecord,
     MergeRequestRecord,
     PackageRecord,
@@ -39,6 +40,7 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self.auth_calls: list[AuthContext] = []
         self.metadata_bug_calls: list[str] = []
         self.full_bug_calls: list[str] = []
+        self.search_bug_calls: list[BugSearchRecord] = []
         self.package_calls: list[str] = []
         self.version_calls: list[tuple[str, str]] = []
         self.merge_request_calls: list[str] = []
@@ -105,6 +107,16 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
     def get_bug(self, bug_id: str) -> BugRecord | None:
         self.full_bug_calls.append(bug_id)
         return self._bugs.get(bug_id)
+
+    def search_bugs(self, query: BugSearchRecord) -> list[BugRecord]:
+        self.search_bug_calls.append(query)
+        results = list(self._bugs.values())
+
+        if query.title is None:
+            return results
+
+        needle = query.title.lower()
+        return [bug for bug in results if needle in bug.title.lower()]
 
     def submit_bug(self, submission: BugSubmissionRecord) -> BugRecord | None:
         self.submissions.append(submission)
@@ -232,6 +244,19 @@ class QueryServiceTests(unittest.TestCase):
         self.assertEqual("new bug", created.title)
         self.assertEqual([submission], self.provider.submissions)
         self.assertEqual(AuthScope.READ_WRITE, self.provider.auth_calls[-1].scope)
+
+    def test_search_bugs(self) -> None:
+        self.service.login(provider_name="fake")
+
+        query = BugSearchRecord(
+            provider_name="fake",
+            title="bug one",
+        )
+        matches = self.service.search_bugs(query=query, provider_name="fake")
+
+        self.assertEqual(1, len(matches))
+        self.assertEqual("1", matches[0].id)
+        self.assertEqual([query], self.provider.search_bug_calls)
 
     def test_available_providers(self) -> None:
         self.assertEqual(("fake",), self.service.available_providers())
