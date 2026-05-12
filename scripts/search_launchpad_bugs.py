@@ -6,8 +6,8 @@ from datetime import datetime
 
 from lazr.restfulclient.errors import CredentialsFileError
 
+from ubq import QueryService
 from ubq.models import AuthScope, BugSearchRecord, ProviderCredentials, UserRecord
-from ubq.services import QueryService
 
 
 def usage() -> None:

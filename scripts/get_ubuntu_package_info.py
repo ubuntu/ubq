@@ -3,8 +3,8 @@
 
 import sys
 
+from ubq import QueryService
 from ubq.models import AuthScope
-from ubq.services import QueryService
 
 
 def main():

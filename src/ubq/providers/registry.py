@@ -3,20 +3,18 @@
 from collections.abc import Callable, Iterable
 
 from ubq.models import AuthContext, AuthScope, ProviderCredentials
-from ubq.providers import (
-    BugProvider,
-    GitHubBugProvider,
-    GitHubMergeRequestProvider,
-    LaunchpadBugProvider,
-    LaunchpadMergeRequestProvider,
-    LaunchpadPackageProvider,
-    LaunchpadVersionProvider,
-    MergeRequestProvider,
-    PackageProvider,
-    Provider,
-    VersionProvider,
-)
+from ubq.providers.bug import BugProvider
+from ubq.providers.github.bug import GitHubBugProvider
+from ubq.providers.github.merge_request import GitHubMergeRequestProvider
+from ubq.providers.launchpad.bug import LaunchpadBugProvider
+from ubq.providers.launchpad.merge_request import LaunchpadMergeRequestProvider
+from ubq.providers.launchpad.package import LaunchpadPackageProvider
+from ubq.providers.launchpad.version import LaunchpadVersionProvider
+from ubq.providers.merge_request import MergeRequestProvider
+from ubq.providers.package import PackageProvider
+from ubq.providers.provider import Provider
 from ubq.providers.session import ProviderSession
+from ubq.providers.version import VersionProvider
 
 
 class ProviderRegistry:

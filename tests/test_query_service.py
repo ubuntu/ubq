@@ -3,6 +3,7 @@
 import unittest
 from datetime import datetime
 
+from ubq import QueryService
 from ubq.models import (
     AuthContext,
     AuthScope,
@@ -17,10 +18,10 @@ from ubq.providers import (
     BugProvider,
     MergeRequestProvider,
     PackageProvider,
+    ProviderRegistry,
     ProviderSession,
     VersionProvider,
 )
-from ubq.services import ProviderRegistry, QueryService
 
 
 class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestProvider):

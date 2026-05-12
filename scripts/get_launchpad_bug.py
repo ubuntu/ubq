@@ -5,8 +5,8 @@ import sys
 
 from lazr.restfulclient.errors import CredentialsFileError
 
+from ubq import QueryService
 from ubq.models import AuthScope, ProviderCredentials
-from ubq.services import QueryService
 
 
 def main():

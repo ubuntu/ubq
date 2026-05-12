@@ -10,7 +10,7 @@ from ubq.models import (
     VersionRecord,
 )
 from ubq.models.bug import BugSubmissionRecord
-from ubq.services.registry import ProviderRegistry
+from ubq.providers.registry import ProviderRegistry
 
 
 class QueryService:

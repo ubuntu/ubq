@@ -11,11 +11,13 @@ from ubq.providers.launchpad.version import LaunchpadVersionProvider
 from ubq.providers.merge_request import MergeRequestProvider
 from ubq.providers.package import PackageProvider
 from ubq.providers.provider import Provider
+from ubq.providers.registry import ProviderRegistry
 from ubq.providers.session import ProviderSession
 from ubq.providers.version import VersionProvider
 
 __all__ = [
     "Provider",
+    "ProviderRegistry",
     "ProviderSession",
     "BugProvider",
     "PackageProvider",
