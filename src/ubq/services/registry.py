@@ -5,6 +5,8 @@ from collections.abc import Callable, Iterable
 from ubq.models import AuthContext, AuthScope, ProviderCredentials
 from ubq.providers import (
     BugProvider,
+    GitHubBugProvider,
+    GitHubMergeRequestProvider,
     LaunchpadBugProvider,
     LaunchpadMergeRequestProvider,
     LaunchpadPackageProvider,
@@ -27,6 +29,8 @@ class ProviderRegistry:
         self._providers: dict[str, list[Provider]] = {}
         self._sessions: dict[tuple[str, AuthScope], ProviderSession] = {}
         initial_providers = providers or (
+            GitHubBugProvider(),
+            GitHubMergeRequestProvider(),
             LaunchpadBugProvider(),
             LaunchpadPackageProvider(),
             LaunchpadVersionProvider(),
