@@ -7,7 +7,7 @@ from datetime import datetime
 from lazr.restfulclient.errors import CredentialsFileError
 
 from ubq import QueryService
-from ubq.models import AuthScope, BugSearchRecord, ProviderCredentials, UserRecord
+from ubq.models import BugSearchRecord, ProviderCredentials, UserRecord
 
 
 def usage() -> None:
@@ -122,7 +122,6 @@ def main() -> None:
     try:
         service.login(
             provider_name="launchpad",
-            scope=AuthScope.READ_ONLY,
             credentials=ProviderCredentials(token=token) if token else None,
         )
     except CredentialsFileError as err:
@@ -156,7 +155,6 @@ def main() -> None:
         bugs = service.search_bugs(
             query=query,
             provider_name="launchpad",
-            scope=AuthScope.READ_ONLY,
         )
     except ValueError as err:
         print(f"Search failed: {err}", file=sys.stderr)

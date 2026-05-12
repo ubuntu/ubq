@@ -3,8 +3,6 @@
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Self
 
-from ubq.models import AuthScope
-
 if TYPE_CHECKING:
     from ubq.providers import (
         BugProvider,
@@ -17,10 +15,9 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class ProviderSession:
-    """Authenticated provider session scoped by read-only or rw permissions."""
+    """Authenticated provider session."""
 
     provider_name: str
-    scope: AuthScope
     bug_provider: BugProvider | None = None
     version_provider: VersionProvider | None = None
     package_provider: PackageProvider | None = None

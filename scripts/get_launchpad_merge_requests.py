@@ -4,7 +4,6 @@
 import sys
 
 from ubq import QueryService
-from ubq.models import AuthScope
 
 
 def main():
@@ -18,12 +17,11 @@ def main():
     user_id = sys.argv[1]
 
     service = QueryService()
-    service.login(provider_name="launchpad", scope=AuthScope.READ_ONLY)
+    service.login(provider_name="launchpad")
 
     merge_requests = service.get_merge_requests_from_user(
         user_id=user_id,
         provider_name="launchpad",
-        scope=AuthScope.READ_ONLY,
     )
 
     if not merge_requests:

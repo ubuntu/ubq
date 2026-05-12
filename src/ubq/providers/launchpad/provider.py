@@ -5,7 +5,7 @@ from typing import Any
 from launchpadlib.credentials import Credentials  # type: ignore[import-untyped]
 from launchpadlib.launchpad import Launchpad  # type: ignore[import-untyped]
 
-from ubq.models import AuthContext, AuthScope
+from ubq.models import AuthContext
 from ubq.providers.provider import Provider
 from ubq.providers.session import ProviderSession
 
@@ -66,21 +66,15 @@ class LaunchpadProvider(Provider):
             )
 
         else:
-            access_levels = ["READ_PUBLIC"]
-
-            if auth_context.scope == AuthScope.READ_WRITE:
-                access_levels = ["WRITE_PRIVATE"]
-
             self._launchpad = Launchpad.login_with(
                 application_name="ubq",
                 service_root="production",
-                allow_access_levels=access_levels,
+                allow_access_levels=["READ_PUBLIC"],
                 version="devel",
             )
 
         return ProviderSession(
             provider_name=self.provider_name,
-            scope=auth_context.scope,
             session_object=self._launchpad,
         ).with_provider(self)
 

@@ -1,7 +1,6 @@
 """Query service for Ubuntu data."""
 
 from ubq.models import (
-    AuthScope,
     BugRecord,
     BugSearchRecord,
     MergeRequestRecord,
@@ -22,14 +21,12 @@ class QueryService:
     def login(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
         credentials: ProviderCredentials | None = None,
         force: bool = False,
     ) -> None:
-        """Create or refresh a scoped provider session."""
+        """Create or refresh a provider session."""
         self._registry.login(
             provider_name=provider_name,
-            scope=scope,
             credentials=credentials,
             force=force,
         )
@@ -38,11 +35,10 @@ class QueryService:
         self,
         bug_id: str,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
         metadata_only: bool = False,
     ) -> BugRecord | None:
-        """Fetch a bug from a provider using an active scoped session."""
-        provider = self._registry.get_bug_provider(provider_name, scope=scope)
+        """Fetch a bug from a provider using an active session."""
+        provider = self._registry.get_bug_provider(provider_name)
 
         if metadata_only:
             return provider.get_bug_metadata(bug_id)
@@ -55,40 +51,36 @@ class QueryService:
         series: str,
         pocket: str,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> VersionRecord | None:
-        """Fetch package version metadata using an active scoped session."""
-        provider = self._registry.get_version_provider(provider_name, scope=scope)
+        """Fetch package version metadata using an active session."""
+        provider = self._registry.get_version_provider(provider_name)
         return provider.get_version(package_name, series, pocket)
 
     def get_package(
         self,
         package_name: str,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> PackageRecord | None:
-        """Fetch a package from a provider using an active scoped session."""
-        provider = self._registry.get_package_provider(provider_name, scope=scope)
+        """Fetch a package from a provider using an active session."""
+        provider = self._registry.get_package_provider(provider_name)
         return provider.get_package(package_name)
 
     def get_merge_request(
         self,
         merge_request_id: str,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> MergeRequestRecord | None:
-        """Fetch a merge request using an active scoped session."""
-        provider = self._registry.get_merge_request_provider(provider_name, scope=scope)
+        """Fetch a merge request using an active session."""
+        provider = self._registry.get_merge_request_provider(provider_name)
         return provider.get_merge_request(merge_request_id)
 
     def get_merge_requests_from_user(
         self,
         user_id: str,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> list[MergeRequestRecord]:
-        """Fetch merge requests assigned to a user using an active scoped session."""
-        provider = self._registry.get_merge_request_provider(provider_name, scope=scope)
+        """Fetch merge requests assigned to a user using an active session."""
+        provider = self._registry.get_merge_request_provider(provider_name)
         return provider.get_merge_requests_from_user(user_id)
 
     def submit_bug(
@@ -96,18 +88,17 @@ class QueryService:
         submission: BugSubmissionRecord,
         provider_name: str,
     ) -> BugRecord | None:
-        """Submit a new bug to a provider using an active scoped session."""
-        provider = self._registry.get_bug_provider(provider_name, scope=AuthScope.READ_WRITE)
+        """Submit a new bug to a provider using an active session."""
+        provider = self._registry.get_bug_provider(provider_name)
         return provider.submit_bug(submission)
 
     def search_bugs(
         self,
         query: BugSearchRecord,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> list[BugRecord]:
-        """Search bugs using an active scoped session."""
-        provider = self._registry.get_bug_provider(provider_name, scope=scope)
+        """Search bugs using an active session."""
+        provider = self._registry.get_bug_provider(provider_name)
         return provider.search_bugs(query)
 
     def available_providers(self) -> tuple[str, ...]:

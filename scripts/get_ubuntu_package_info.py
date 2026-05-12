@@ -4,7 +4,6 @@
 import sys
 
 from ubq import QueryService
-from ubq.models import AuthScope
 
 
 def main():
@@ -19,13 +18,12 @@ def main():
 
     # Create service with default registry
     service = QueryService()
-    service.login(provider_name="launchpad", scope=AuthScope.READ_ONLY)
+    service.login(provider_name="launchpad")
 
     # Fetch the package information
     package = service.get_package(
         package_name=package_name,
         provider_name="launchpad",
-        scope=AuthScope.READ_ONLY,
     )
 
     if package is None:

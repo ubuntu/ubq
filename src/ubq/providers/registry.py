@@ -2,7 +2,7 @@
 
 from collections.abc import Callable, Iterable
 
-from ubq.models import AuthContext, AuthScope, ProviderCredentials
+from ubq.models import AuthContext, ProviderCredentials
 from ubq.providers.bug import BugProvider
 from ubq.providers.github.bug import GitHubBugProvider
 from ubq.providers.github.merge_request import GitHubMergeRequestProvider
@@ -25,7 +25,7 @@ class ProviderRegistry:
         providers: Iterable[Provider] | None = None,
     ):
         self._providers: dict[str, list[Provider]] = {}
-        self._sessions: dict[tuple[str, AuthScope], ProviderSession] = {}
+        self._sessions: dict[str, ProviderSession] = {}
         initial_providers = providers or (
             GitHubBugProvider(),
             GitHubMergeRequestProvider(),
@@ -46,12 +46,11 @@ class ProviderRegistry:
     def login(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
         credentials: ProviderCredentials | None = None,
         force: bool = False,
     ) -> ProviderSession:
-        """Authenticate with a provider and cache the scoped session."""
-        key = (provider_name.lower(), scope)
+        """Authenticate with a provider and cache the session."""
+        key = provider_name.lower()
         if not force:
             existing = self._sessions.get(key)
             if existing is not None:
@@ -60,7 +59,6 @@ class ProviderRegistry:
         providers = self._get_providers(provider_name)
         auth_context = AuthContext(
             provider_name=providers[0].provider_name,
-            scope=scope,
             credentials=credentials,
         )
         session = providers[0].authenticate(auth_context)
@@ -72,28 +70,23 @@ class ProviderRegistry:
     def get_session(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> ProviderSession:
-        """Get an existing scoped session for the provider."""
-        key = (provider_name.lower(), scope)
+        """Get an existing session for the provider."""
+        key = provider_name.lower()
         session = self._sessions.get(key)
         if session is None:
             raise ValueError(
-                "No active session for provider "
-                f"'{provider_name}' with scope '{scope.value}'. "
-                "Call login() first."
+                f"No active session for provider '{provider_name}'. Call login() first."
             )
         return session
 
     def get_bug_provider(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> BugProvider:
         """Return bug provider for an active scoped session."""
         capability = self._capability_from_session(
             provider_name,
-            scope,
             "bug",
             lambda session: session.get_bug_provider(),
         )
@@ -106,12 +99,10 @@ class ProviderRegistry:
     def get_version_provider(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> VersionProvider:
         """Return version provider for an active scoped session."""
         capability = self._capability_from_session(
             provider_name,
-            scope,
             "version",
             lambda session: session.get_version_provider(),
         )
@@ -124,12 +115,10 @@ class ProviderRegistry:
     def get_package_provider(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> PackageProvider:
         """Return package provider for an active scoped session."""
         capability = self._capability_from_session(
             provider_name,
-            scope,
             "package",
             lambda session: session.get_package_provider(),
         )
@@ -142,12 +131,10 @@ class ProviderRegistry:
     def get_merge_request_provider(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> MergeRequestProvider:
         """Return merge request provider for an active scoped session."""
         capability = self._capability_from_session(
             provider_name,
-            scope,
             "merge request",
             lambda session: session.get_merge_request_provider(),
         )
@@ -161,17 +148,16 @@ class ProviderRegistry:
         """List all registered provider names."""
         return tuple(sorted(self._providers))
 
-    def active_sessions(self) -> tuple[tuple[str, AuthScope], ...]:
-        """List active provider sessions by provider and scope."""
+    def active_sessions(self) -> tuple[str, ...]:
+        """List active provider sessions by provider name."""
         return tuple(sorted(self._sessions))
 
     def clear_session(
         self,
         provider_name: str,
-        scope: AuthScope = AuthScope.READ_ONLY,
     ) -> None:
         """Clear a cached provider session."""
-        self._sessions.pop((provider_name.lower(), scope), None)
+        self._sessions.pop(provider_name.lower(), None)
 
     def _get_providers(self, provider_name: str) -> list[Provider]:
         """Return registered providers for the given provider name."""
@@ -187,16 +173,14 @@ class ProviderRegistry:
     def _capability_from_session(
         self,
         provider_name: str,
-        scope: AuthScope,
         capability_name: str,
         getter: Callable[[ProviderSession], Provider | None],
     ) -> Provider:
         """Return capability from an active session or raise error."""
-        session = self.get_session(provider_name, scope)
+        session = self.get_session(provider_name)
         capability = getter(session)
         if capability is None:
             raise ValueError(
-                f"Provider '{provider_name}' does not support "
-                f"{capability_name} queries for scope '{scope.value}'."
+                f"Provider '{provider_name}' does not support {capability_name} queries."
             )
         return capability

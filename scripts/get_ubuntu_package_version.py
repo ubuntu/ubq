@@ -4,7 +4,6 @@
 import sys
 
 from ubq import QueryService
-from ubq.models import AuthScope
 
 
 def main():
@@ -19,7 +18,7 @@ def main():
 
     # Create service with default registry
     service = QueryService()
-    service.login(provider_name="launchpad", scope=AuthScope.READ_ONLY)
+    service.login(provider_name="launchpad")
 
     # Fetch the package version information
     ubuntu_version = service.get_version(
@@ -27,7 +26,6 @@ def main():
         series="resolute",
         pocket="Release",
         provider_name="launchpad",
-        scope=AuthScope.READ_ONLY,
     )
 
     debian_version = service.get_version(
@@ -35,7 +33,6 @@ def main():
         series="debian-unstable",
         pocket="Release",
         provider_name="launchpad",
-        scope=AuthScope.READ_ONLY,
     )
 
     print(f"Package Name: {package_name}")

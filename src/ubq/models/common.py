@@ -2,14 +2,6 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
-
-
-class AuthScope(Enum):
-    """Login permission scope Enum."""
-
-    READ_ONLY = "read-only"
-    READ_WRITE = "read-write"
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,5 +36,4 @@ class AuthContext:
     """Authentication context used when creating a provider session."""
 
     provider_name: str
-    scope: AuthScope
     credentials: ProviderCredentials | None = None

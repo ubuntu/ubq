@@ -6,7 +6,7 @@ import sys
 from lazr.restfulclient.errors import CredentialsFileError
 
 from ubq import QueryService
-from ubq.models import AuthScope, ProviderCredentials
+from ubq.models import ProviderCredentials
 
 
 def main():
@@ -40,7 +40,6 @@ def main():
     try:
         service.login(
             provider_name="launchpad",
-            scope=AuthScope.READ_ONLY,
             credentials=ProviderCredentials(token=token) if token else None,
         )
     except CredentialsFileError as e:
@@ -51,7 +50,6 @@ def main():
     bug = service.get_bug(
         bug_id=bug_id,
         provider_name="launchpad",
-        scope=AuthScope.READ_ONLY,
         metadata_only=not show_comments,
     )
 

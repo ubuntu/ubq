@@ -6,7 +6,6 @@ from datetime import datetime
 from ubq import QueryService
 from ubq.models import (
     AuthContext,
-    AuthScope,
     BugRecord,
     BugSearchRecord,
     BugSubmissionRecord,
@@ -87,11 +86,9 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self.auth_calls.append(auth_context)
         self._session_object = {
             "provider": auth_context.provider_name,
-            "scope": auth_context.scope.value,
         }
         return ProviderSession(
             provider_name=self.provider_name,
-            scope=auth_context.scope,
             session_object=self._session_object,
         ).with_provider(self)
 
@@ -162,7 +159,6 @@ class QueryServiceTests(unittest.TestCase):
         self.service.login(provider_name="fake")
 
         self.assertEqual(1, len(self.provider.auth_calls))
-        self.assertEqual(AuthScope.READ_ONLY, self.provider.auth_calls[0].scope)
 
     def test_login_with_force_reauthenticates(self) -> None:
         self.service.login(provider_name="fake")
@@ -238,13 +234,12 @@ class QueryServiceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.service.submit_bug(submission=submission, provider_name="fake")
 
-        self.service.login(provider_name="fake", scope=AuthScope.READ_WRITE)
+        self.service.login(provider_name="fake")
         created = self.service.submit_bug(submission=submission, provider_name="fake")
 
         self.assertIsNotNone(created)
         self.assertEqual("new bug", created.title)
         self.assertEqual([submission], self.provider.submissions)
-        self.assertEqual(AuthScope.READ_WRITE, self.provider.auth_calls[-1].scope)
 
     def test_search_bugs(self) -> None:
         self.service.login(provider_name="fake")

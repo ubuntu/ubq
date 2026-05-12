@@ -97,7 +97,6 @@ class GitHubProvider:
 
         return ProviderSession(
             provider_name=self.provider_name,
-            scope=auth_context.scope,
             session_object=self._token,
         )
 
