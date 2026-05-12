@@ -13,6 +13,9 @@ from ubq.providers.package import PackageProvider
 from ubq.providers.provider import Provider
 from ubq.providers.registry import ProviderRegistry
 from ubq.providers.session import ProviderSession
+from ubq.providers.snapcraft.package import SnapcraftPackageProvider
+from ubq.providers.snapcraft.provider import SnapcraftProvider
+from ubq.providers.snapcraft.version import SnapcraftVersionProvider
 from ubq.providers.version import VersionProvider
 
 __all__ = [
@@ -30,4 +33,7 @@ __all__ = [
     "LaunchpadMergeRequestProvider",
     "LaunchpadPackageProvider",
     "LaunchpadVersionProvider",
+    "SnapcraftProvider",
+    "SnapcraftPackageProvider",
+    "SnapcraftVersionProvider",
 ]

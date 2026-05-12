@@ -16,13 +16,15 @@ VALID_LP_POCKETS = {
 class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
     """Provider implementation for Launchpad deb package versions."""
 
-    def get_version(self, package_name: str, series: str, pocket: str) -> VersionRecord | None:
+    def get_version(
+        self, package_name: str, series: str, pocket: str | None
+    ) -> VersionRecord | None:
         """Fetch the latest version of a package by name, series and release pocket.
 
         For Debian releases, use "debian-unstable", "debian-trixie", etc. in the series field.
         """
 
-        if pocket not in VALID_LP_POCKETS:
+        if pocket is None or pocket not in VALID_LP_POCKETS:
             raise ValueError(
                 f"Invalid Ubuntu pocket: '{pocket}'."
                 f" Valid pockets are: {', '.join(VALID_LP_POCKETS)}."

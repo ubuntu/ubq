@@ -49,7 +49,7 @@ class QueryService:
         self,
         package_name: str,
         series: str,
-        pocket: str,
+        pocket: str | None,
         provider_name: str,
     ) -> VersionRecord | None:
         """Fetch package version metadata using an active session."""
