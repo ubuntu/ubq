@@ -80,7 +80,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             lp_package = self._get_lp_source_package_object(pkg_name)
             if lp_package is None:
                 raise ValueError(f"Package '{pkg_name}' not found in Launchpad.")
-            new_lp_task = lp_bug.addTask(target=lp_package)
+            lp_bug.addTask(target=lp_package)
 
         lp_milestone = None
         if submission.milestone is not None:
@@ -108,24 +108,33 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
             lp_task.lp_save()
 
+            target = None
+            package_name = None
+            if hasattr(lp_task, "target"):
+                target = str(lp_task.target)
+                split_target = target.split("/")
+                if len(split_target) > 0:
+                    package_name = split_target[-1]
+
             new_tasks.append(
                 BugTaskRecord(
-                    title=new_lp_task.title,
-                    target=new_lp_task.target,
-                    importance=new_lp_task.importance,
-                    status=new_lp_task.status,
-                    date_assigned=new_lp_task.date_assigned,
-                    date_closed=new_lp_task.date_closed,
-                    date_created=new_lp_task.date_created,
-                    date_left_closed=new_lp_task.date_left_closed,
-                    date_left_new=new_lp_task.date_left_new,
-                    date_incomplete=new_lp_task.date_incomplete,
-                    date_confirmed=new_lp_task.date_confirmed,
-                    date_triaged=new_lp_task.date_triaged,
-                    date_in_progress=new_lp_task.date_in_progress,
-                    date_fix_committed=new_lp_task.date_fix_committed,
-                    date_fix_released=new_lp_task.date_fix_released,
-                    milestone=new_lp_task.milestone.name if new_lp_task.milestone else None,
+                    title=lp_task.title,
+                    target=target,
+                    package_name=package_name,
+                    importance=lp_task.importance,
+                    status= lp_task.status,
+                    date_assigned=lp_task.date_assigned,
+                    date_closed=lp_task.date_closed,
+                    date_created=lp_task.date_created,
+                    date_left_closed=lp_task.date_left_closed,
+                    date_left_new=lp_task.date_left_new,
+                    date_incomplete=lp_task.date_incomplete,
+                    date_confirmed=lp_task.date_confirmed,
+                    date_triaged=lp_task.date_triaged,
+                    date_in_progress=lp_task.date_in_progress,
+                    date_fix_committed=lp_task.date_fix_committed,
+                    date_fix_released=lp_task.date_fix_released,
+                    milestone=lp_task.milestone.name if lp_task.milestone else None,
                 )
             )
 
@@ -143,15 +152,26 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         assignee = None
         if hasattr(lp_task, "assignee"):
             assignee_data = lp_task.assignee
-            assignee = UserRecord(
-                username=assignee_data.name,
-                display_name=assignee_data.display_name,
-                profile_url=f"{LP_BASE_USER_URL}{assignee_data.name}",
-            )
+            if hasattr(assignee_data, "name") and hasattr(assignee_data, "display_name"):
+                assignee = UserRecord(
+                    username=assignee_data.name,
+                    display_name=assignee_data.display_name,
+                    profile_url=f"{LP_BASE_USER_URL}{assignee_data.name}",
+                )
+
+        target = None
+        package_name = None
+        if hasattr(lp_task, "target"):
+            target = str(lp_task.target)
+            split_target = target.split("/")
+            if len(split_target) > 0:
+                package_name = split_target[-1]
+
 
         return BugTaskRecord(
             title=lp_task.title,
-            target=lp_task.target,
+            target=target,
+            package_name=package_name,
             importance=lp_task.importance,
             status=lp_task.status,
             date_assigned=lp_task.date_assigned,

@@ -12,6 +12,7 @@ class BugTaskRecord:
 
     title: str
     target: str | None = None
+    package_name: str | None = None
     importance: str | None = None
     status: str | None = None
     date_assigned: datetime | None = None
