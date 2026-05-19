@@ -21,7 +21,7 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
     ) -> VersionRecord | None:
         """Fetch the latest version of a package by name, series and release pocket.
 
-        For Debian releases, use "debian-unstable", "debian-trixie", etc. in the series field.
+        For Debian releases, use "debian-experimental", "debian-sid", "debian-trixie", etc.
         """
 
         if pocket is None or pocket not in VALID_LP_POCKETS:
@@ -42,11 +42,13 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
             distro = self._get_lp_ubuntu_distro_object()
 
         archive = distro.main_archive
+        series = distro.getSeries(name_or_version=series)
 
         sources = archive.getPublishedSources(
             exact_match=True,
             order_by_date=True,
             source_name=package_name,
+            distro_series=series,
             pocket=pocket,
             status="Published",
         )

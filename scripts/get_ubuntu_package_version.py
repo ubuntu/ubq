@@ -9,12 +9,13 @@ from ubq import QueryService
 def main():
     """Fetch and display Ubuntu package version information."""
     if len(sys.argv) < 2:
-        print("Usage: get_ubuntu_package_version.py <package_name>")
+        print("Usage: get_ubuntu_package_version.py <package_name> [ubuntu_series]")
         print()
-        print("Example: get_ubuntu_package_version.py bash")
+        print("Example: get_ubuntu_package_version.py bash resolute")
         sys.exit(1)
 
     package_name = sys.argv[1]
+    ubuntu_series = sys.argv[2] if len(sys.argv) > 2 else "resolute"
 
     # Create service with default registry
     service = QueryService()
@@ -23,14 +24,14 @@ def main():
     # Fetch the package version information
     ubuntu_version = service.get_version(
         package_name=package_name,
-        series="resolute",
+        series=ubuntu_series,
         pocket="Release",
         provider_name="launchpad",
     )
 
     debian_version = service.get_version(
         package_name=package_name,
-        series="debian-unstable",
+        series="debian-sid",
         pocket="Release",
         provider_name="launchpad",
     )
@@ -38,9 +39,9 @@ def main():
     print(f"Package Name: {package_name}")
 
     if ubuntu_version is not None:
-        print(f"Ubuntu version: {ubuntu_version.version_string}")
+        print(f"Ubuntu version ({ubuntu_series}): {ubuntu_version.version_string}")
     else:
-        print("Ubuntu version not found.")
+        print(f"Ubuntu version not found for series '{ubuntu_series}'.")
 
     if debian_version is not None:
         print(f"Debian version: {debian_version.version_string}")
