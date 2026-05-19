@@ -353,7 +353,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
         # Add subscribers
         for subscriber in submission.subscribers:
-            created_lp_bug.subscribe(person=subscriber.username)
+            created_lp_bug.subscribe(person=self._get_lp_object().people[subscriber.username])
 
         return BugRecord(
             provider_name=self.provider_name,
