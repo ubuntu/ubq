@@ -123,7 +123,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                     target=target,
                     package_name=package_name,
                     importance=lp_task.importance,
-                    status= lp_task.status,
+                    status=lp_task.status,
                     date_assigned=lp_task.date_assigned,
                     date_closed=lp_task.date_closed,
                     date_created=lp_task.date_created,
@@ -167,7 +167,6 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             split_target = target.split("/")
             if len(split_target) > 0:
                 package_name = split_target[-1]
-
 
         return BugTaskRecord(
             title=lp_task.title,
