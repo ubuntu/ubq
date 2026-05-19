@@ -75,8 +75,9 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         if lp_bug is None:
             return []
 
+        # Add new tasks, skipping the first package which was used for initial submission.
         new_tasks: list[BugTaskRecord] = []
-        for pkg_name in submission.package_names:
+        for pkg_name in submission.package_names[1:]:
             lp_package = self._get_lp_source_package_object(pkg_name)
             if lp_package is None:
                 raise ValueError(f"Package '{pkg_name}' not found in Launchpad.")
