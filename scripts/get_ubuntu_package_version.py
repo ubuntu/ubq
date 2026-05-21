@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fetch version of a deb package in Debian Unstable and Ubuntu Resolute."""
 
+import difflib
 import sys
 
 from ubq import QueryService
@@ -49,6 +50,17 @@ def main():
         print(f"Debian version: {debian_version.version_string}")
     else:
         print("Debian version not found.")
+
+    if ubuntu_version is not None and debian_version is not None:
+        print("Changelog diff:")
+        print("------------")
+        diff = difflib.unified_diff(
+            (debian_version.changelog or "").splitlines(keepends=True),
+            (ubuntu_version.changelog or "").splitlines(keepends=True),
+            fromfile="debian",
+            tofile="ubuntu",
+        )
+        print("".join(diff), end="")
 
 
 if __name__ == "__main__":

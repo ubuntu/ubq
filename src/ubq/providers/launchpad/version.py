@@ -1,5 +1,7 @@
 """Get deb package versions from Launchpad."""
 
+import urllib.request
+
 from ubq.models import VersionRecord
 from ubq.providers.launchpad.provider import LaunchpadProvider
 from ubq.providers.version import VersionProvider
@@ -43,6 +45,14 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
 
         if sources is not None and len(sources) > 0:
             latest_source = sources[0]
+
+            changelog = ""
+            if hasattr(latest_source, "changelogUrl"):
+                changelog_url = latest_source.changelogUrl()
+                if changelog_url:
+                    with urllib.request.urlopen(changelog_url) as resp:
+                        changelog = resp.read().decode("utf-8", errors="replace")
+
             return VersionRecord(
                 provider_name=self.provider_name,
                 version_string=latest_source.source_package_version,
@@ -52,6 +62,7 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
                 pocket=pocket,
                 created_at=latest_source.date_created,
                 released_at=latest_source.date_published,
+                changelog=changelog,
             )
 
         return None

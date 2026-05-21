@@ -16,3 +16,4 @@ class VersionRecord:
     pocket: str | None = None
     created_at: datetime | None = None
     released_at: datetime | None = None
+    changelog: str | None = None
