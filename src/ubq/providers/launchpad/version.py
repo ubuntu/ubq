@@ -17,12 +17,9 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
     """Provider implementation for Launchpad deb package versions."""
 
     def get_version(
-        self, package_name: str, series: str, pocket: str | None
+        self, package_name: str, archive:str, series: str, pocket: str | None
     ) -> VersionRecord | None:
-        """Fetch the latest version of a package by name, series and release pocket.
-
-        For Debian releases, use "debian-experimental", "debian-sid", "debian-trixie", etc.
-        """
+        """Fetch the latest version of a package by name, series and release pocket."""
 
         if pocket is None or pocket not in VALID_LP_POCKETS:
             raise ValueError(
@@ -30,16 +27,7 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
                 f" Valid pockets are: {', '.join(VALID_LP_POCKETS)}."
             )
 
-        if series.startswith("debian"):
-            series_parts = series.split("-", 1)
-            if len(series_parts) != 2:
-                raise ValueError(
-                    f"Invalid Debian series format: '{series}'. Expected 'debian-<name>'."
-                )
-            series = series_parts[1]
-            distro = self._get_lp_debian_distro_object()
-        else:
-            distro = self._get_lp_ubuntu_distro_object()
+        distro = self._get_distro_object(archive)
 
         archive = distro.main_archive
         series = distro.getSeries(name_or_version=series)
@@ -59,6 +47,7 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
                 provider_name=self.provider_name,
                 version_string=latest_source.source_package_version,
                 package_name=latest_source.source_package_name,
+                archive=archive,
                 series=series,
                 pocket=pocket,
                 created_at=latest_source.date_created,

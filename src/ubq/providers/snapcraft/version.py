@@ -20,7 +20,7 @@ class SnapcraftVersionProvider(SnapcraftProvider, VersionProvider):
     """
 
     def get_version(
-        self, package_name: str, series: str, pocket: str | None
+        self, package_name: str, archive: str, series: str, pocket: str | None
     ) -> VersionRecord | None:
         """Fetch the current version of a snap for a given track and risk level."""
         data = self._rest_get(
@@ -59,6 +59,7 @@ class SnapcraftVersionProvider(SnapcraftProvider, VersionProvider):
                 provider_name=self.provider_name,
                 version_string=version_string,
                 package_name=snap_name,
+                archive=archive,
                 series=series,
                 pocket=pocket,
                 released_at=released_at,
