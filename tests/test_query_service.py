@@ -42,7 +42,7 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self.full_bug_calls: list[str] = []
         self.search_bug_calls: list[BugSearchRecord] = []
         self.package_calls: list[str] = []
-        self.version_calls: list[tuple[str, str]] = []
+        self.version_calls: list[tuple[str, str, str, str]] = []
         self.merge_request_calls: list[str] = []
         self.assigned_merge_request_calls: list[str] = []
         self.submissions: list[BugSubmissionRecord] = []
@@ -60,10 +60,11 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         }
         self._packages: dict[str, PackageRecord] = {"test-package": package}
         self._versions: dict[tuple[str, str, str], VersionRecord] = {
-            ("test-package", "resolute", "Release"): VersionRecord(
+            ("test-package", "ubuntu", "resolute", "Release"): VersionRecord(
                 provider_name=self.provider_name,
                 version_string="1.2.3",
                 package_name=package.name,
+                archive="ubuntu",
                 series="resolute",
                 pocket="Release",
                 created_at=now,
@@ -129,11 +130,13 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self._bugs[bug_id] = created
         return created
 
-    def get_version(self, package_name: str, series: str, pocket: str) -> VersionRecord | None:
-        self.version_calls.append((package_name, series, pocket))
-        return self._versions.get((package_name, series, pocket))
+    def get_version(
+        self, package_name: str, archive: str, series: str, pocket: str
+    ) -> VersionRecord | None:
+        self.version_calls.append((package_name, archive, series, pocket))
+        return self._versions.get((package_name, archive, series, pocket))
 
-    def get_package(self, package_name: str) -> PackageRecord | None:
+    def get_package(self, package_name: str, archive: str) -> PackageRecord | None:
         self.package_calls.append(package_name)
         return self._packages.get(package_name)
 
@@ -192,9 +195,12 @@ class QueryServiceTests(unittest.TestCase):
     def test_get_package_version_and_merge_request(self) -> None:
         self.service.login(provider_name="fake")
 
-        package = self.service.get_package(package_name="test-package", provider_name="fake")
+        package = self.service.get_package(
+            package_name="test-package", archive="ubuntu", provider_name="fake"
+        )
         version = self.service.get_version(
             package_name="test-package",
+            archive="ubuntu",
             series="resolute",
             pocket="Release",
             provider_name="fake",
@@ -208,7 +214,9 @@ class QueryServiceTests(unittest.TestCase):
         self.assertIsNotNone(version)
         self.assertIsNotNone(merge_request)
         self.assertEqual(["test-package"], self.provider.package_calls)
-        self.assertEqual([("test-package", "resolute", "Release")], self.provider.version_calls)
+        self.assertEqual(
+            [("test-package", "ubuntu", "resolute", "Release")], self.provider.version_calls
+        )
         self.assertEqual(["17"], self.provider.merge_request_calls)
 
     def test_get_merge_requests_from_user(self) -> None:
