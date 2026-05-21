@@ -25,3 +25,5 @@ class MergeRequestRecord:
     updated_at: datetime | None = None
     merged_at: datetime | None = None
     package: PackageRecord | None = None
+    added_lines: int | None = None
+    removed_lines: int | None = None

@@ -35,6 +35,8 @@ def main():
         print(f"  Source: {mr.source_branch or 'N/A'}")
         print(f"  Target: {mr.target_branch or 'N/A'}")
         print(f"  URL: {mr.web_url or 'N/A'}")
+        print(f"  Added lines: {mr.added_lines if mr.added_lines is not None else 'N/A'}")
+        print(f"  Removed lines: {mr.removed_lines if mr.removed_lines is not None else 'N/A'}")
 
 
 if __name__ == "__main__":

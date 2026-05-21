@@ -39,6 +39,14 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
             if hasattr(mr, "web_link"):
                 mr_id = mr.web_link.rsplit("/", 1)[-1]
 
+            added_lines = None
+            removed_lines = None
+
+            if hasattr(mr, "preview_diff"):
+                diff_data = mr.preview_diff
+                added_lines = int(diff_data.added_lines_count)
+                removed_lines = int(diff_data.removed_lines_count)
+
             converted_merge_requests.append(
                 MergeRequestRecord(
                     provider_name=self.provider_name,
@@ -52,6 +60,8 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                     assignees=assignees,
                     created_at=mr.date_created,
                     merged_at=mr.date_merged,
+                    added_lines=added_lines,
+                    removed_lines=removed_lines,
                 )
             )
 
