@@ -18,5 +18,6 @@ class LaunchpadPackageProvider(LaunchpadProvider, PackageProvider):
         return PackageRecord(
             provider_name=self.provider_name,
             name=source_package.name,
+            archive=archive,
             package_url=source_package.web_link,
         )

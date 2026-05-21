@@ -22,5 +22,6 @@ class SnapcraftPackageProvider(SnapcraftProvider, PackageProvider):
         return PackageRecord(
             provider_name=self.provider_name,
             name=name,
+            archive=archive,
             package_url=package_url,
         )
