@@ -31,6 +31,7 @@ def main():
 
     version = service.get_version(
         package_name=snap_name,
+        archive="https://snapcraft.io/",
         series=series,
         pocket=pocket,
         provider_name="snapcraft",

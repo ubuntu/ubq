@@ -24,6 +24,7 @@ def main():
     # Fetch the package version information
     ubuntu_version = service.get_version(
         package_name=package_name,
+        archive="ubuntu",
         series=ubuntu_series,
         pocket="Release",
         provider_name="launchpad",
@@ -31,7 +32,8 @@ def main():
 
     debian_version = service.get_version(
         package_name=package_name,
-        series="debian-sid",
+        archive="debian",
+        series="sid",
         pocket="Release",
         provider_name="launchpad",
     )

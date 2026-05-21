@@ -23,6 +23,7 @@ def main():
     # Fetch the package information
     package = service.get_package(
         package_name=package_name,
+        archive="ubuntu",
         provider_name="launchpad",
     )
 
