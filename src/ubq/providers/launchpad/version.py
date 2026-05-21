@@ -19,7 +19,7 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
     """Provider implementation for Launchpad deb package versions."""
 
     def get_version(
-        self, package_name: str, archive:str, series: str, pocket: str | None
+        self, package_name: str, archive: str, series: str, pocket: str | None
     ) -> VersionRecord | None:
         """Fetch the latest version of a package by name, series and release pocket."""
 
