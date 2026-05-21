@@ -48,22 +48,24 @@ class QueryService:
     def get_version(
         self,
         package_name: str,
+        archive: str,
         series: str,
         pocket: str | None,
         provider_name: str,
     ) -> VersionRecord | None:
         """Fetch package version metadata using an active session."""
         provider = self._registry.get_version_provider(provider_name)
-        return provider.get_version(package_name, series, pocket)
+        return provider.get_version(package_name, archive, series, pocket)
 
     def get_package(
         self,
         package_name: str,
+        archive: str,
         provider_name: str,
     ) -> PackageRecord | None:
         """Fetch a package from a provider using an active session."""
         provider = self._registry.get_package_provider(provider_name)
-        return provider.get_package(package_name)
+        return provider.get_package(package_name, archive)
 
     def get_merge_request(
         self,
