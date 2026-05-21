@@ -11,6 +11,7 @@ class VersionRecord:
     provider_name: str
     version_string: str
     package_name: str
+    archive: str | None = None
     series: str | None = None
     pocket: str | None = None
     created_at: datetime | None = None

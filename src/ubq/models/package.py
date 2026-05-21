@@ -9,4 +9,5 @@ class PackageRecord:
 
     provider_name: str
     name: str
+    archive: str | None = None
     package_url: str | None = None
