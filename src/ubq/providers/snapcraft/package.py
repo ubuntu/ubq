@@ -2,13 +2,13 @@
 
 from ubq.models import PackageRecord
 from ubq.providers.package import PackageProvider
-from ubq.providers.snapcraft.provider import SNAPCRAFT_STORE_BASE, SnapcraftProvider
+from ubq.providers.snapcraft.provider import SnapcraftProvider
 
 
 class SnapcraftPackageProvider(SnapcraftProvider, PackageProvider):
     """Provider implementation for Snapcraft packages."""
 
-    def get_package(self, package_name: str) -> PackageRecord | None:
+    def get_package(self, package_name: str, archive: str) -> PackageRecord | None:
         """Fetch a Snapcraft package by name."""
         data = self._rest_get(f"/snaps/info/{package_name}", params={"fields": "name,store-url"})
 
@@ -17,7 +17,7 @@ class SnapcraftPackageProvider(SnapcraftProvider, PackageProvider):
             return None
 
         snap = data.get("snap", {})
-        package_url = snap.get("store-url") or f"{SNAPCRAFT_STORE_BASE}/{name}"
+        package_url = snap.get("store-url") or f"{archive}/{name}"
 
         return PackageRecord(
             provider_name=self.provider_name,

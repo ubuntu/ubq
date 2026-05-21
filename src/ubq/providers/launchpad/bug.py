@@ -78,14 +78,14 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         # Add new tasks, skipping the first package which was used for initial submission.
         new_tasks: list[BugTaskRecord] = []
         for pkg_name in submission.package_names[1:]:
-            lp_package = self._get_lp_source_package_object(pkg_name)
+            lp_package = self._get_lp_source_package_object(pkg_name, "ubuntu")
             if lp_package is None:
                 raise ValueError(f"Package '{pkg_name}' not found in Launchpad.")
             lp_bug.addTask(target=lp_package)
 
         lp_milestone = None
         if submission.milestone is not None:
-            lp_milestone = self._get_lp_ubuntu_distro_object().getMilestone(
+            lp_milestone = self._get_distro_object("ubuntu").getMilestone(
                 name=submission.milestone
             )
 
@@ -240,7 +240,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             search_params["assignee"] = self._get_lp_object().people[query.assignee.username]
 
         if query.milestone is not None:
-            search_params["milestone"] = self._get_lp_ubuntu_distro_object().getMilestone(
+            search_params["milestone"] = self._get_distro_object("ubuntu").getMilestone(
                 name=query.milestone
             )
 
@@ -334,7 +334,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         """Submit a new bug to Launchpad and return the created record."""
         self._validate_bug_submission(submission)
 
-        first_package = self._get_lp_source_package_object(submission.package_names[0])
+        first_package = self._get_lp_source_package_object(submission.package_names[0], "ubuntu")
         if first_package is None:
             raise ValueError(f"Package '{submission.package_names[0]}' not found in Launchpad.")
 

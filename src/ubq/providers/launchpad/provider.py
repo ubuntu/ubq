@@ -27,28 +27,19 @@ class LaunchpadProvider(Provider):
 
         return self._launchpad
 
-    def _get_lp_ubuntu_distro_object(self) -> Any:
-        """Fetch the Launchpad Ubuntu distribution object."""
+    def _get_distro_object(self, distro: str) -> Any:
+        """Fetch a distribution object from launchpad."""
         lp = self._get_lp_object()
 
         if not hasattr(lp, "distributions"):
             raise RuntimeError("Launchpad session does not have 'distributions' attribute.")
 
-        return lp.distributions["ubuntu"]
+        return lp.distributions[distro]
 
-    def _get_lp_debian_distro_object(self) -> Any:
-        """Fetch the Launchpad Debian distribution object."""
-        lp = self._get_lp_object()
-
-        if not hasattr(lp, "distributions"):
-            raise RuntimeError("Launchpad session does not have 'distributions' attribute.")
-
-        return lp.distributions["debian"]
-
-    def _get_lp_source_package_object(self, package_name: str) -> Any:
+    def _get_lp_source_package_object(self, package_name: str, archive: str) -> Any:
         """Fetch a Launchpad source package object by name."""
         try:
-            return self._get_lp_ubuntu_distro_object().getSourcePackage(name=package_name)
+            return self._get_distro_object(archive).getSourcePackage(name=package_name)
         except KeyError:
             return None
 

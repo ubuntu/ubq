@@ -9,7 +9,6 @@ from ubq.models import AuthContext
 from ubq.providers.session import ProviderSession
 
 SNAPCRAFT_API_BASE = "https://api.snapcraft.io/v2"
-SNAPCRAFT_STORE_BASE = "https://snapcraft.io"
 _SNAP_DEVICE_SERIES = "16"
 _USER_AGENT = "ubq/1.0"
 

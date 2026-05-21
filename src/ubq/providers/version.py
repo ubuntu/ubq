@@ -11,6 +11,6 @@ class VersionProvider(Provider, Protocol):
     """Contract that all version providers must implement."""
 
     def get_version(
-        self, package_name: str, series: str, pocket: str | None
+        self, package_name: str, archive: str, series: str, pocket: str | None
     ) -> VersionRecord | None:
-        """Fetch the version of a package by name and release pocket."""
+        """Fetch the version of a package by name, archive, series, and release pocket."""
