@@ -33,7 +33,9 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
         try:
             distro = self._get_distro_object(archive)
 
-            archive = distro.main_archive
+            archive = getattr(distro, "main_archive", None)
+            if archive is None:
+                return None
             series = distro.getSeries(name_or_version=series)
 
             sources = archive.getPublishedSources(
@@ -64,15 +66,20 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
                         except TimeoutError as exc:
                             raise self._wrap_timeout(exc) from exc
 
+                version_string = getattr(latest_source, "source_package_version", None)
+                package_name = getattr(latest_source, "source_package_name", None)
+                if version_string is None or package_name is None:
+                    return None
+
                 return VersionRecord(
                     provider_name=self.provider_name,
-                    version_string=latest_source.source_package_version,
-                    package_name=latest_source.source_package_name,
+                    version_string=version_string,
+                    package_name=package_name,
                     archive=archive,
                     series=series,
                     pocket=pocket,
-                    created_at=latest_source.date_created,
-                    released_at=latest_source.date_published,
+                    created_at=getattr(latest_source, "date_created", None),
+                    released_at=getattr(latest_source, "date_published", None),
                     changelog=changelog,
                 )
 

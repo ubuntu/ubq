@@ -31,11 +31,12 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                     for vote in mr.votes_collection:
                         if hasattr(vote, "reviewer"):
                             reviewer_data = vote.reviewer
+                            reviewer_name = getattr(reviewer_data, "name", None)
                             assignees.append(
                                 UserRecord(
-                                    username=reviewer_data.name,
-                                    display_name=reviewer_data.display_name,
-                                    profile_url=f"{LP_BASE_USER_URL}{reviewer_data.name}",
+                                    username=reviewer_name,
+                                    display_name=getattr(reviewer_data, "display_name", None),
+                                    profile_url=f"{LP_BASE_USER_URL}{reviewer_name}" if reviewer_name else None,
                                 )
                             )
 
@@ -48,22 +49,24 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
 
                 if hasattr(mr, "preview_diff"):
                     diff_data = mr.preview_diff
-                    added_lines = int(diff_data.added_lines_count)
-                    removed_lines = int(diff_data.removed_lines_count)
+                    diff_added = getattr(diff_data, "added_lines_count", None)
+                    diff_removed = getattr(diff_data, "removed_lines_count", None)
+                    added_lines = int(diff_added) if diff_added is not None else None
+                    removed_lines = int(diff_removed) if diff_removed is not None else None
 
                 converted_merge_requests.append(
                     MergeRequestRecord(
                         provider_name=self.provider_name,
                         id=mr_id,
                         title="",
-                        description=mr.description,
-                        status=mr.queue_status,
-                        source_branch=mr.source_git_path,
-                        target_branch=mr.target_git_path,
-                        web_url=mr.web_link,
+                        description=getattr(mr, "description", "") or "",
+                        status=getattr(mr, "queue_status", None),
+                        source_branch=getattr(mr, "source_git_path", None),
+                        target_branch=getattr(mr, "target_git_path", None),
+                        web_url=getattr(mr, "web_link", None),
                         assignees=assignees,
-                        created_at=mr.date_created,
-                        merged_at=mr.date_merged,
+                        created_at=getattr(mr, "date_created", None),
+                        merged_at=getattr(mr, "date_merged", None),
                         added_lines=added_lines,
                         removed_lines=removed_lines,
                     )

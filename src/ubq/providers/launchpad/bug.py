@@ -120,25 +120,26 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                     if len(split_target) > 0:
                         package_name = split_target[-1]
 
+                lp_task_milestone = getattr(lp_task, "milestone", None)
                 new_tasks.append(
                     BugTaskRecord(
-                        title=lp_task.title,
+                        title=getattr(lp_task, "title", ""),
                         target=target,
                         package_name=package_name,
-                        importance=lp_task.importance,
-                        status=lp_task.status,
-                        date_assigned=lp_task.date_assigned,
-                        date_closed=lp_task.date_closed,
-                        date_created=lp_task.date_created,
-                        date_left_closed=lp_task.date_left_closed,
-                        date_left_new=lp_task.date_left_new,
-                        date_incomplete=lp_task.date_incomplete,
-                        date_confirmed=lp_task.date_confirmed,
-                        date_triaged=lp_task.date_triaged,
-                        date_in_progress=lp_task.date_in_progress,
-                        date_fix_committed=lp_task.date_fix_committed,
-                        date_fix_released=lp_task.date_fix_released,
-                        milestone=lp_task.milestone.name if lp_task.milestone else None,
+                        importance=getattr(lp_task, "importance", None),
+                        status=getattr(lp_task, "status", None),
+                        date_assigned=getattr(lp_task, "date_assigned", None),
+                        date_closed=getattr(lp_task, "date_closed", None),
+                        date_created=getattr(lp_task, "date_created", None),
+                        date_left_closed=getattr(lp_task, "date_left_closed", None),
+                        date_left_new=getattr(lp_task, "date_left_new", None),
+                        date_incomplete=getattr(lp_task, "date_incomplete", None),
+                        date_confirmed=getattr(lp_task, "date_confirmed", None),
+                        date_triaged=getattr(lp_task, "date_triaged", None),
+                        date_in_progress=getattr(lp_task, "date_in_progress", None),
+                        date_fix_committed=getattr(lp_task, "date_fix_committed", None),
+                        date_fix_released=getattr(lp_task, "date_fix_released", None),
+                        milestone=getattr(lp_task_milestone, "name", None),
                     )
                 )
 
@@ -174,24 +175,25 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                 if len(split_target) > 0:
                     package_name = split_target[-1]
 
+            lp_task_milestone = getattr(lp_task, "milestone", None)
             return BugTaskRecord(
-                title=lp_task.title,
+                title=getattr(lp_task, "title", ""),
                 target=target,
                 package_name=package_name,
-                importance=lp_task.importance,
-                status=lp_task.status,
-                date_assigned=lp_task.date_assigned,
-                date_closed=lp_task.date_closed,
-                date_created=lp_task.date_created,
-                date_left_closed=lp_task.date_left_closed,
-                date_left_new=lp_task.date_left_new,
-                date_incomplete=lp_task.date_incomplete,
-                date_confirmed=lp_task.date_confirmed,
-                date_triaged=lp_task.date_triaged,
-                date_in_progress=lp_task.date_in_progress,
-                date_fix_committed=lp_task.date_fix_committed,
-                date_fix_released=lp_task.date_fix_released,
-                milestone=lp_task.milestone.name if lp_task.milestone else None,
+                importance=getattr(lp_task, "importance", None),
+                status=getattr(lp_task, "status", None),
+                date_assigned=getattr(lp_task, "date_assigned", None),
+                date_closed=getattr(lp_task, "date_closed", None),
+                date_created=getattr(lp_task, "date_created", None),
+                date_left_closed=getattr(lp_task, "date_left_closed", None),
+                date_left_new=getattr(lp_task, "date_left_new", None),
+                date_incomplete=getattr(lp_task, "date_incomplete", None),
+                date_confirmed=getattr(lp_task, "date_confirmed", None),
+                date_triaged=getattr(lp_task, "date_triaged", None),
+                date_in_progress=getattr(lp_task, "date_in_progress", None),
+                date_fix_committed=getattr(lp_task, "date_fix_committed", None),
+                date_fix_released=getattr(lp_task, "date_fix_released", None),
+                milestone=getattr(lp_task_milestone, "name", None),
                 assignee=assignee,
             )
         except TimeoutError as exc:
@@ -206,14 +208,14 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
         try:
             return BugRecord(
                 provider_name=self.provider_name,
-                id=str(lp_bug.id),
-                title=lp_bug.title,
-                description=lp_bug.description,
-                created_at=lp_bug.date_created,
-                updated_at=lp_bug.date_last_updated,
-                last_message_at=lp_bug.date_last_message,
-                last_patch_at=lp_bug.latest_patch_uploaded,
-                tags=lp_bug.tags,
+                id=str(getattr(lp_bug, "id", "")),
+                title=getattr(lp_bug, "title", ""),
+                description=getattr(lp_bug, "description", None),
+                created_at=getattr(lp_bug, "date_created", None),
+                updated_at=getattr(lp_bug, "date_last_updated", None),
+                last_message_at=getattr(lp_bug, "date_last_message", None),
+                last_patch_at=getattr(lp_bug, "latest_patch_uploaded", None),
+                tags=getattr(lp_bug, "tags", []),
             )
         except TimeoutError as exc:
             raise self._wrap_timeout(exc) from exc
@@ -272,7 +274,7 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                     continue
 
                 lp_bug = lp_task.bug
-                bug_id = str(lp_bug.id)
+                bug_id = str(getattr(lp_bug, "id", ""))
                 if bug_id in seen_bug_ids:
                     continue
                 seen_bug_ids.add(bug_id)
@@ -281,13 +283,13 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                     BugRecord(
                         provider_name=self.provider_name,
                         id=bug_id,
-                        title=lp_bug.title,
-                        description=lp_bug.description,
-                        created_at=lp_bug.date_created,
-                        updated_at=lp_bug.date_last_updated,
-                        last_message_at=lp_bug.date_last_message,
-                        last_patch_at=lp_bug.latest_patch_uploaded,
-                        tags=lp_bug.tags,
+                        title=getattr(lp_bug, "title", ""),
+                        description=getattr(lp_bug, "description", None),
+                        created_at=getattr(lp_bug, "date_created", None),
+                        updated_at=getattr(lp_bug, "date_last_updated", None),
+                        last_message_at=getattr(lp_bug, "date_last_message", None),
+                        last_patch_at=getattr(lp_bug, "latest_patch_uploaded", None),
+                        tags=getattr(lp_bug, "tags", []),
                     )
                 )
 
@@ -312,35 +314,37 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
             comments: list[CommentRecord] = []
             if hasattr(lp_bug, "messages"):
                 for msg in lp_bug.messages:
-                    if msg.visible:
-                        author = None
-                        if hasattr(msg, "owner") and msg.owner is not None:
-                            owner_data = msg.owner
-                            author = UserRecord(
-                                username=owner_data.name,
-                                display_name=owner_data.display_name,
-                                profile_url=f"{LP_BASE_USER_URL}{owner_data.name}",
-                            )
-
-                        comments.append(
-                            CommentRecord(
-                                author=author,
-                                content=msg.content,
-                                created_at=msg.date_created,
-                                edited_at=msg.date_last_edited,
-                            )
+                    if not getattr(msg, "visible", True):
+                        continue
+                    author = None
+                    if hasattr(msg, "owner") and msg.owner is not None:
+                        owner_data = msg.owner
+                        owner_name = getattr(owner_data, "name", None)
+                        author = UserRecord(
+                            username=owner_name,
+                            display_name=getattr(owner_data, "display_name", None),
+                            profile_url=f"{LP_BASE_USER_URL}{owner_name}" if owner_name else None,
                         )
+
+                    comments.append(
+                        CommentRecord(
+                            author=author,
+                            content=getattr(msg, "content", ""),
+                            created_at=getattr(msg, "date_created", None),
+                            edited_at=getattr(msg, "date_last_edited", None),
+                        )
+                    )
 
             return BugRecord(
                 provider_name=self.provider_name,
-                id=str(lp_bug.id),
-                title=lp_bug.title,
-                description=lp_bug.description,
-                created_at=lp_bug.date_created,
-                updated_at=lp_bug.date_last_updated,
-                last_message_at=lp_bug.date_last_message,
-                last_patch_at=lp_bug.latest_patch_uploaded,
-                tags=lp_bug.tags,
+                id=str(getattr(lp_bug, "id", "")),
+                title=getattr(lp_bug, "title", ""),
+                description=getattr(lp_bug, "description", None),
+                created_at=getattr(lp_bug, "date_created", None),
+                updated_at=getattr(lp_bug, "date_last_updated", None),
+                last_message_at=getattr(lp_bug, "date_last_message", None),
+                last_patch_at=getattr(lp_bug, "latest_patch_uploaded", None),
+                tags=getattr(lp_bug, "tags", []),
                 bug_tasks=tasks,
                 comments=comments,
             )
@@ -378,14 +382,14 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
 
             return BugRecord(
                 provider_name=self.provider_name,
-                id=str(created_lp_bug.id),
-                title=created_lp_bug.title,
-                description=created_lp_bug.description,
-                created_at=created_lp_bug.date_created,
-                updated_at=created_lp_bug.date_last_updated,
-                last_message_at=created_lp_bug.date_last_message,
-                last_patch_at=created_lp_bug.latest_patch_uploaded,
-                tags=created_lp_bug.tags,
+                id=str(getattr(created_lp_bug, "id", "")),
+                title=getattr(created_lp_bug, "title", ""),
+                description=getattr(created_lp_bug, "description", None),
+                created_at=getattr(created_lp_bug, "date_created", None),
+                updated_at=getattr(created_lp_bug, "date_last_updated", None),
+                last_message_at=getattr(created_lp_bug, "date_last_message", None),
+                last_patch_at=getattr(created_lp_bug, "latest_patch_uploaded", None),
+                tags=getattr(created_lp_bug, "tags", []),
                 bug_tasks=tasks if tasks is not None else [],
             )
         except TimeoutError as exc:

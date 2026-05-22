@@ -16,11 +16,15 @@ class LaunchpadPackageProvider(LaunchpadProvider, PackageProvider):
             return None
 
         try:
+            pkg_name = getattr(source_package, "name", None)
+            if pkg_name is None:
+                return None
+
             return PackageRecord(
                 provider_name=self.provider_name,
-                name=source_package.name,
+                name=pkg_name,
                 archive=archive,
-                package_url=source_package.web_link,
+                package_url=getattr(source_package, "web_link", None),
             )
         except TimeoutError as exc:
             raise self._wrap_timeout(exc) from exc
