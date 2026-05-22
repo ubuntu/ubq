@@ -1,9 +1,14 @@
 """GitHub merge request (pull request) data provider."""
 
-from datetime import datetime, timezone
 from typing import Any
 
 from ubq.models import MergeRequestRecord, UserRecord
+from ubq.providers.github.common import (
+    parse_dt,
+    parse_github_id,
+    parse_repo_from_api_url,
+    user_record,
+)
 from ubq.providers.github.provider import GH_BASE_URL, GitHubProvider
 from ubq.providers.merge_request import MergeRequestProvider
 
@@ -22,38 +27,9 @@ query GetPullRequest($owner: String!, $name: String!, $number: Int!) {
 """
 
 
-def _parse_dt(s: str | None) -> datetime | None:
-    if not s:
-        return None
-    try:
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-    except ValueError:
-        return None
-
-
 def _parse_mr_id(mr_id: str) -> tuple[str, str, int]:
     """Parse 'owner/repo#number' into (owner, repo, number)."""
-    try:
-        repo_part, num_str = mr_id.rsplit("#", 1)
-        owner, name = repo_part.split("/", 1)
-        return owner, name, int(num_str)
-    except (ValueError, AttributeError) as exc:
-        raise ValueError(
-            f"Invalid merge request ID format '{mr_id}'. Expected 'owner/repo#number'."
-        ) from exc
-
-
-def _user_record(node: dict[str, Any] | None) -> UserRecord | None:
-    if not node:
-        return None
-    login = node.get("login")
-    if not login:
-        return None
-    return UserRecord(
-        username=login,
-        display_name=node.get("name") or login,
-        profile_url=f"{GH_BASE_URL}/{login}",
-    )
+    return parse_github_id(mr_id, label="merge request ID")
 
 
 def _pr_node_to_record(
@@ -71,11 +47,11 @@ def _pr_node_to_record(
         source_branch=node.get("headRefName"),
         target_branch=node.get("baseRefName"),
         web_url=node.get("url"),
-        author=_user_record(node.get("author")),
-        assignees=[r for n in assignee_nodes if (r := _user_record(n)) is not None],
-        created_at=_parse_dt(node.get("createdAt")),
-        updated_at=_parse_dt(node.get("updatedAt")),
-        merged_at=_parse_dt(node.get("mergedAt")),
+        author=user_record(node.get("author")),
+        assignees=[r for n in assignee_nodes if (r := user_record(n)) is not None],
+        created_at=parse_dt(node.get("createdAt")),
+        updated_at=parse_dt(node.get("updatedAt")),
+        merged_at=parse_dt(node.get("mergedAt")),
     )
 
 
@@ -101,8 +77,10 @@ class GitHubMergeRequestProvider(GitHubProvider, MergeRequestProvider):
         results: list[MergeRequestRecord] = []
         for item in response.get("items") or []:
             repo_url = item.get("repository_url", "")
-            repo_path = repo_url.removeprefix("https://api.github.com/repos/")
-            owner_part, _, repo_part = repo_path.partition("/")
+            parsed = parse_repo_from_api_url(repo_url)
+            if parsed is None:
+                continue
+            owner_part, repo_part = parsed
             number = item["number"]
             mr_id = f"{owner_part}/{repo_part}#{number}"
 
@@ -140,9 +118,9 @@ class GitHubMergeRequestProvider(GitHubProvider, MergeRequestProvider):
                     web_url=pull_request_url,
                     author=author,
                     assignees=assignees,
-                    created_at=_parse_dt(item.get("created_at")),
-                    updated_at=_parse_dt(item.get("updated_at")),
-                    merged_at=_parse_dt((item.get("pull_request") or {}).get("merged_at")),
+                    created_at=parse_dt(item.get("created_at")),
+                    updated_at=parse_dt(item.get("updated_at")),
+                    merged_at=parse_dt((item.get("pull_request") or {}).get("merged_at")),
                 )
             )
         return results

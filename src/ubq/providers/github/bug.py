@@ -1,6 +1,5 @@
 """GitHub bug (issue) data provider."""
 
-from datetime import datetime, timezone
 from typing import Any
 
 from ubq.models import (
@@ -12,6 +11,12 @@ from ubq.models import (
     UserRecord,
 )
 from ubq.providers.bug import BugProvider
+from ubq.providers.github.common import (
+    parse_dt,
+    parse_github_id,
+    parse_repo_from_api_url,
+    user_record,
+)
 from ubq.providers.github.provider import GH_BASE_URL, GitHubProvider
 
 _ISSUE_QUERY = """
@@ -47,38 +52,9 @@ query GetIssueMetadata($owner: String!, $name: String!, $number: Int!) {
 """
 
 
-def _parse_dt(s: str | None) -> datetime | None:
-    if not s:
-        return None
-    try:
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-    except ValueError:
-        return None
-
-
 def _parse_bug_id(bug_id: str) -> tuple[str, str, int]:
     """Parse 'owner/repo#number' into (owner, repo, number)."""
-    try:
-        repo_part, num_str = bug_id.rsplit("#", 1)
-        owner, name = repo_part.split("/", 1)
-        return owner, name, int(num_str)
-    except (ValueError, AttributeError) as exc:
-        raise ValueError(
-            f"Invalid bug ID format '{bug_id}'. Expected 'owner/repo#number'."
-        ) from exc
-
-
-def _user_record(node: dict[str, Any] | None) -> UserRecord | None:
-    if not node:
-        return None
-    login = node.get("login")
-    if not login:
-        return None
-    return UserRecord(
-        username=login,
-        display_name=node.get("name") or login,
-        profile_url=f"https://github.com/{login}",
-    )
+    return parse_github_id(bug_id, label="bug ID")
 
 
 def _issue_to_bug_record(
@@ -90,17 +66,17 @@ def _issue_to_bug_record(
 ) -> BugRecord:
     bug_id = f"{owner}/{repo}#{node['number']}"
     assignee_nodes = node.get("assignees", {}).get("nodes") or []
-    assignee = _user_record(assignee_nodes[0]) if assignee_nodes else None
+    assignee = user_record(assignee_nodes[0]) if assignee_nodes else None
 
     comments: list[CommentRecord] = []
     if with_comments:
         for c in node.get("comments", {}).get("nodes") or []:
             comments.append(
                 CommentRecord(
-                    author=_user_record(c.get("author")),
+                    author=user_record(c.get("author")),
                     content=c.get("body") or "",
-                    created_at=_parse_dt(c.get("createdAt")),
-                    edited_at=_parse_dt(c.get("lastEditedAt")),
+                    created_at=parse_dt(c.get("createdAt")),
+                    edited_at=parse_dt(c.get("lastEditedAt")),
                 )
             )
 
@@ -111,9 +87,9 @@ def _issue_to_bug_record(
         description=node.get("body"),
         tags=[lbl["name"] for lbl in (node.get("labels", {}).get("nodes") or [])],
         comments=comments,
-        created_at=_parse_dt(node.get("createdAt")),
-        updated_at=_parse_dt(node.get("updatedAt")),
-        owner=_user_record(node.get("author")),
+        created_at=parse_dt(node.get("createdAt")),
+        updated_at=parse_dt(node.get("updatedAt")),
+        owner=user_record(node.get("author")),
         assignee=assignee,
     )
 
@@ -173,8 +149,10 @@ class GitHubBugProvider(GitHubProvider, BugProvider):
         results: list[BugRecord] = []
         for item in response.get("items") or []:
             repo_url = item.get("repository_url", "")
-            repo_path = repo_url.removeprefix("https://api.github.com/repos/")
-            owner_part, _, repo_part = repo_path.partition("/")
+            parsed = parse_repo_from_api_url(repo_url)
+            if parsed is None:
+                continue
+            owner_part, repo_part = parsed
             number = item["number"]
             assignee_data = item.get("assignee")
             assignee = (
@@ -203,8 +181,8 @@ class GitHubBugProvider(GitHubProvider, BugProvider):
                     title=item["title"],
                     description=item.get("body"),
                     tags=[lbl["name"] for lbl in (item.get("labels") or [])],
-                    created_at=_parse_dt(item.get("created_at")),
-                    updated_at=_parse_dt(item.get("updated_at")),
+                    created_at=parse_dt(item.get("created_at")),
+                    updated_at=parse_dt(item.get("updated_at")),
                     owner=owner_record,
                     assignee=assignee,
                 )
@@ -270,8 +248,8 @@ class GitHubBugProvider(GitHubProvider, BugProvider):
             title=item["title"],
             description=item.get("body"),
             tags=[lbl["name"] for lbl in (item.get("labels") or [])],
-            created_at=_parse_dt(item.get("created_at")),
-            updated_at=_parse_dt(item.get("updated_at")),
+            created_at=parse_dt(item.get("created_at")),
+            updated_at=parse_dt(item.get("updated_at")),
             owner=owner_record,
             assignee=assignee,
             bug_tasks=[
