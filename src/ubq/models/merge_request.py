@@ -14,7 +14,7 @@ class MergeRequestRecord:
     provider_name: str
     id: str
     title: str
-    description: str
+    description: str | None = None
     status: str | None = None
     source_branch: str | None = None
     target_branch: str | None = None
