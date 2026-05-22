@@ -97,6 +97,8 @@ class LaunchpadBugProvider(LaunchpadProvider, BugProvider):
                 lp_assignee = self._get_lp_object().people[submission.assignee.username]
 
             # Set owner, milestone, status, and importance for each new task if specified
+            if not hasattr(lp_bug, "bug_tasks"):
+                return new_tasks
             for lp_task in lp_bug.bug_tasks:
                 if lp_milestone is not None:
                     lp_task.milestone = lp_milestone

@@ -32,11 +32,13 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                         if hasattr(vote, "reviewer"):
                             reviewer_data = vote.reviewer
                             reviewer_name = getattr(reviewer_data, "name", None)
+                            if reviewer_name is None:
+                                continue
                             assignees.append(
                                 UserRecord(
                                     username=reviewer_name,
                                     display_name=getattr(reviewer_data, "display_name", None),
-                                    profile_url=f"{LP_BASE_USER_URL}{reviewer_name}" if reviewer_name else None,
+                                    profile_url=f"{LP_BASE_USER_URL}{reviewer_name}",
                                 )
                             )
 

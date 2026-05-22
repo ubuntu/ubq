@@ -33,16 +33,16 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
         try:
             distro = self._get_distro_object(archive)
 
-            archive = getattr(distro, "main_archive", None)
-            if archive is None:
+            lp_archive = getattr(distro, "main_archive", None)
+            if lp_archive is None:
                 return None
-            series = distro.getSeries(name_or_version=series)
+            lp_series = distro.getSeries(name_or_version=series)
 
-            sources = archive.getPublishedSources(
+            sources = lp_archive.getPublishedSources(
                 exact_match=True,
                 order_by_date=True,
                 source_name=package_name,
-                distro_series=series,
+                distro_series=lp_series,
                 pocket=pocket,
                 status="Published",
             )

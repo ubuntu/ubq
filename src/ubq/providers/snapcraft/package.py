@@ -13,7 +13,7 @@ class SnapcraftPackageProvider(SnapcraftProvider, PackageProvider):
         data = self._rest_get(f"/snaps/info/{package_name}", params={"fields": "name,store-url"})
 
         name = data.get("name")
-        if name is None:
+        if not name:
             return None
 
         snap = data.get("snap", {})
