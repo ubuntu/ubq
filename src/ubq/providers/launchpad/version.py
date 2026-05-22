@@ -63,8 +63,6 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
                             if isinstance(exc.reason, TimeoutError):
                                 raise self._wrap_timeout(exc) from exc
                             raise
-                        except TimeoutError as exc:
-                            raise self._wrap_timeout(exc) from exc
 
                 version_string = getattr(latest_source, "source_package_version", None)
                 package_name = getattr(latest_source, "source_package_name", None)
