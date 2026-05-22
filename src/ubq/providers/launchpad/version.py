@@ -1,5 +1,6 @@
 """Get deb package versions from Launchpad."""
 
+import urllib.error
 import urllib.request
 
 from ubq.models import VersionRecord
@@ -29,40 +30,52 @@ class LaunchpadVersionProvider(LaunchpadProvider, VersionProvider):
                 f" Valid pockets are: {', '.join(VALID_LP_POCKETS)}."
             )
 
-        distro = self._get_distro_object(archive)
+        try:
+            distro = self._get_distro_object(archive)
 
-        archive = distro.main_archive
-        series = distro.getSeries(name_or_version=series)
+            archive = distro.main_archive
+            series = distro.getSeries(name_or_version=series)
 
-        sources = archive.getPublishedSources(
-            exact_match=True,
-            order_by_date=True,
-            source_name=package_name,
-            distro_series=series,
-            pocket=pocket,
-            status="Published",
-        )
-
-        if sources is not None and len(sources) > 0:
-            latest_source = sources[0]
-
-            changelog = ""
-            if hasattr(latest_source, "changelogUrl"):
-                changelog_url = latest_source.changelogUrl()
-                if changelog_url:
-                    with urllib.request.urlopen(changelog_url) as resp:
-                        changelog = resp.read().decode("utf-8", errors="replace")
-
-            return VersionRecord(
-                provider_name=self.provider_name,
-                version_string=latest_source.source_package_version,
-                package_name=latest_source.source_package_name,
-                archive=archive,
-                series=series,
+            sources = archive.getPublishedSources(
+                exact_match=True,
+                order_by_date=True,
+                source_name=package_name,
+                distro_series=series,
                 pocket=pocket,
-                created_at=latest_source.date_created,
-                released_at=latest_source.date_published,
-                changelog=changelog,
+                status="Published",
             )
 
-        return None
+            if sources is not None and len(sources) > 0:
+                latest_source = sources[0]
+
+                changelog = ""
+                if hasattr(latest_source, "changelogUrl"):
+                    changelog_url = latest_source.changelogUrl()
+                    if changelog_url:
+                        try:
+                            with urllib.request.urlopen(
+                                changelog_url, timeout=self._timeout
+                            ) as resp:
+                                changelog = resp.read().decode("utf-8", errors="replace")
+                        except urllib.error.URLError as exc:
+                            if isinstance(exc.reason, TimeoutError):
+                                raise self._wrap_timeout(exc) from exc
+                            raise
+                        except TimeoutError as exc:
+                            raise self._wrap_timeout(exc) from exc
+
+                return VersionRecord(
+                    provider_name=self.provider_name,
+                    version_string=latest_source.source_package_version,
+                    package_name=latest_source.source_package_name,
+                    archive=archive,
+                    series=series,
+                    pocket=pocket,
+                    created_at=latest_source.date_created,
+                    released_at=latest_source.date_published,
+                    changelog=changelog,
+                )
+
+            return None
+        except TimeoutError as exc:
+            raise self._wrap_timeout(exc) from exc

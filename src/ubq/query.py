@@ -15,8 +15,8 @@ from ubq.providers.registry import ProviderRegistry
 class QueryService:
     """Query service for data from provider sessions."""
 
-    def __init__(self, registry: ProviderRegistry | None = None):
-        self._registry = registry or ProviderRegistry()
+    def __init__(self, registry: ProviderRegistry | None = None, timeout: int = 30):
+        self._registry = registry or ProviderRegistry(timeout=timeout)
 
     def login(
         self,

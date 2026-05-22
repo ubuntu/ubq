@@ -15,9 +15,12 @@ class LaunchpadPackageProvider(LaunchpadProvider, PackageProvider):
         if source_package is None:
             return None
 
-        return PackageRecord(
-            provider_name=self.provider_name,
-            name=source_package.name,
-            archive=archive,
-            package_url=source_package.web_link,
-        )
+        try:
+            return PackageRecord(
+                provider_name=self.provider_name,
+                name=source_package.name,
+                archive=archive,
+                package_url=source_package.web_link,
+            )
+        except TimeoutError as exc:
+            raise self._wrap_timeout(exc) from exc

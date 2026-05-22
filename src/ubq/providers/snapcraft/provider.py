@@ -2,9 +2,11 @@
 
 import json
 import os
+import urllib.error
 import urllib.request
 from typing import Any
 
+from ubq.errors import RequestTimeoutError
 from ubq.models import AuthContext
 from ubq.providers.session import ProviderSession
 
@@ -23,8 +25,9 @@ class SnapcraftProvider:
 
     provider_name: str = "snapcraft"
 
-    def __init__(self) -> None:
+    def __init__(self, timeout: int = 30) -> None:
         self._macaroon: str | None = None
+        self._timeout = timeout
 
     def _make_headers(self) -> dict[str, str]:
         headers: dict[str, str] = {
@@ -48,8 +51,13 @@ class SnapcraftProvider:
             query_str = "&".join(f"{k}={v}" for k, v in params.items())
             url = f"{url}?{query_str}"
         req = urllib.request.Request(url, headers=self._make_headers(), method="GET")
-        with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read())
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                return json.loads(resp.read())
+        except urllib.error.URLError as exc:
+            if isinstance(exc.reason, TimeoutError):
+                raise RequestTimeoutError(self.provider_name, self._timeout) from exc
+            raise
 
     def authenticate(self, auth_context: AuthContext) -> ProviderSession:
         """Authenticate with Snapcraft and return a reusable session."""

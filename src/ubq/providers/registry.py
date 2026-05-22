@@ -25,18 +25,19 @@ class ProviderRegistry:
     def __init__(
         self,
         providers: Iterable[Provider] | None = None,
+        timeout: int = 30,
     ):
         self._providers: dict[str, list[Provider]] = {}
         self._sessions: dict[str, ProviderSession] = {}
         initial_providers = providers or (
-            GitHubBugProvider(),
-            GitHubMergeRequestProvider(),
-            LaunchpadBugProvider(),
-            LaunchpadPackageProvider(),
-            LaunchpadVersionProvider(),
-            LaunchpadMergeRequestProvider(),
-            SnapcraftPackageProvider(),
-            SnapcraftVersionProvider(),
+            GitHubBugProvider(timeout=timeout),
+            GitHubMergeRequestProvider(timeout=timeout),
+            LaunchpadBugProvider(timeout=timeout),
+            LaunchpadPackageProvider(timeout=timeout),
+            LaunchpadVersionProvider(timeout=timeout),
+            LaunchpadMergeRequestProvider(timeout=timeout),
+            SnapcraftPackageProvider(timeout=timeout),
+            SnapcraftVersionProvider(timeout=timeout),
         )
 
         for provider in initial_providers:

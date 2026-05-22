@@ -5,6 +5,7 @@ from typing import Any
 from launchpadlib.credentials import Credentials  # type: ignore[import-untyped]
 from launchpadlib.launchpad import Launchpad  # type: ignore[import-untyped]
 
+from ubq.errors import RequestTimeoutError
 from ubq.models import AuthContext
 from ubq.providers.provider import Provider
 from ubq.providers.session import ProviderSession
@@ -17,8 +18,9 @@ class LaunchpadProvider(Provider):
 
     provider_name: str = "launchpad"
 
-    def __init__(self) -> None:
+    def __init__(self, timeout: int = 30) -> None:
         self._launchpad: Launchpad | None = None
+        self._timeout = timeout
 
     def _get_lp_object(self) -> Launchpad:
         """Return the authenticated Launchpad session object or raise if not authenticated."""
@@ -27,6 +29,10 @@ class LaunchpadProvider(Provider):
 
         return self._launchpad
 
+    def _wrap_timeout(self, exc: BaseException) -> RequestTimeoutError:
+        """Return a RequestTimeoutError for the given exception."""
+        return RequestTimeoutError(self.provider_name, self._timeout)
+
     def _get_distro_object(self, distro: str) -> Any:
         """Fetch a distribution object from launchpad."""
         lp = self._get_lp_object()
@@ -34,7 +40,10 @@ class LaunchpadProvider(Provider):
         if not hasattr(lp, "distributions"):
             raise RuntimeError("Launchpad session does not have 'distributions' attribute.")
 
-        return lp.distributions[distro]
+        try:
+            return lp.distributions[distro]
+        except TimeoutError as exc:
+            raise self._wrap_timeout(exc) from exc
 
     def _get_lp_source_package_object(self, package_name: str, archive: str) -> Any:
         """Fetch a Launchpad source package object by name."""
@@ -42,6 +51,8 @@ class LaunchpadProvider(Provider):
             return self._get_distro_object(archive).getSourcePackage(name=package_name)
         except KeyError:
             return None
+        except TimeoutError as exc:
+            raise self._wrap_timeout(exc) from exc
 
     def authenticate(self, auth_context: AuthContext) -> ProviderSession:
         """Authenticate with Launchpad and return a reusable session."""
