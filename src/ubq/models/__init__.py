@@ -7,7 +7,7 @@ from ubq.models.common import (
     ProviderCredentials,
     UserRecord,
 )
-from ubq.models.merge_request import MergeRequestRecord
+from ubq.models.merge_request import MergeRequestRecord, MergeRequestVoteRecord
 from ubq.models.package import PackageRecord
 from ubq.models.version import VersionRecord
 
@@ -23,4 +23,5 @@ __all__ = [
     "VersionRecord",
     "PackageRecord",
     "MergeRequestRecord",
+    "MergeRequestVoteRecord",
 ]
