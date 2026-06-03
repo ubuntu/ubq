@@ -1,6 +1,6 @@
 """Common interface for merge request data providers."""
 
-from ubq.models import MergeRequestRecord, UserRecord
+from ubq.models import MergeRequestRecord, MergeRequestVoteRecord, UserRecord
 from ubq.providers.launchpad.provider import LP_BASE_USER_URL, LaunchpadProvider
 from ubq.providers.merge_request import MergeRequestProvider
 
@@ -26,7 +26,7 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
         converted_merge_requests = []
         for mr in merge_requests:
             try:
-                assignees = []
+                votes = []
                 if hasattr(mr, "votes_collection"):
                     for vote in mr.votes_collection:
                         if hasattr(vote, "reviewer"):
@@ -34,13 +34,37 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                             reviewer_name = getattr(reviewer_data, "name", None)
                             if reviewer_name is None:
                                 continue
-                            assignees.append(
-                                UserRecord(
-                                    username=reviewer_name,
-                                    display_name=getattr(reviewer_data, "display_name", None),
-                                    profile_url=f"{LP_BASE_USER_URL}{reviewer_name}",
-                                )
+
+                            user_record = UserRecord(
+                                username=reviewer_name,
+                                display_name=getattr(reviewer_data, "display_name", None),
+                                profile_url=f"{LP_BASE_USER_URL}{reviewer_name}",
                             )
+
+                            vote_type = getattr(vote, "vote", None)
+
+                            # Set vote value based on standard vote strings
+                            vote_value = 0
+
+                            if vote_type == "Approve":
+                                vote_value = 1
+                            elif vote_type == "Needs Fixing" or vote_type == "Disapprove" or vote_type == "Needs Resubmitting":
+                                vote_value = -1
+
+                            message = None
+                            comment = getattr(vote, "comment", None)
+                            if comment:
+                                message = getattr(comment, "content", None)
+
+                            vote_record = MergeRequestVoteRecord(
+                                voter=user_record,
+                                vote_value=vote_value,
+                                vote=vote_type,
+                                message=message,
+                                voted_at=getattr(vote, "date_created", None),
+                                unvoted_at=getattr(vote, "date_deleted", None),
+                            )
+                            votes.append(vote_record)
 
                 mr_id = ""
                 if hasattr(mr, "web_link"):
@@ -66,11 +90,12 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                         source_branch=getattr(mr, "source_git_path", None),
                         target_branch=getattr(mr, "target_git_path", None),
                         web_url=getattr(mr, "web_link", None),
-                        assignees=assignees,
+                        assignees=[v.voter for v in votes],
                         created_at=getattr(mr, "date_created", None),
                         merged_at=getattr(mr, "date_merged", None),
                         added_lines=added_lines,
                         removed_lines=removed_lines,
+                        votes=votes,
                     )
                 )
             except TimeoutError as exc:
