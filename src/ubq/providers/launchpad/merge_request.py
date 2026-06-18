@@ -108,8 +108,9 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                     votes.append(vote_record)
 
         mr_id = ""
-        if hasattr(mr, "web_link"):
-            mr_id = mr.web_link.rsplit("/", 1)[-1]
+        self_link = getattr(mr, "self_link", None)
+        if self_link:
+            mr_id = self_link.removeprefix(LP_API_BASE_URL)
 
         added_lines = None
         removed_lines = None
