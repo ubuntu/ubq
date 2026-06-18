@@ -10,12 +10,14 @@ from ubq.models.package import PackageRecord
 @dataclass(frozen=True, slots=True)
 class MergeRequestVoteRecord:
     """Merge request or pull request vote metadata."""
+
     voter: UserRecord
     vote_value: int
     vote: str | None = None
     message: str | None = None
     voted_at: datetime | None = None
     unvoted_at: datetime | None = None
+
 
 @dataclass(frozen=True, slots=True)
 class MergeRequestRecord:
