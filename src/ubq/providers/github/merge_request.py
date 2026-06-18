@@ -5,7 +5,6 @@ from typing import Any
 from ubq.models import MergeRequestRecord, UserRecord
 from ubq.providers.github.common import (
     parse_dt,
-    parse_github_id,
     parse_repo_from_api_url,
     user_record,
 )
@@ -25,11 +24,6 @@ query GetPullRequest($owner: String!, $name: String!, $number: Int!) {
   }
 }
 """
-
-
-def _parse_mr_id(mr_id: str) -> tuple[str, str, int]:
-    """Parse 'owner/repo#number' into (owner, repo, number)."""
-    return parse_github_id(mr_id, label="merge request ID")
 
 
 def _pr_node_to_record(
@@ -58,14 +52,31 @@ def _pr_node_to_record(
 class GitHubMergeRequestProvider(GitHubProvider, MergeRequestProvider):
     """Provider implementation for GitHub pull requests as merge requests."""
 
-    def get_merge_request(self, merge_request_id: str) -> MergeRequestRecord | None:
-        """Fetch a GitHub pull request by 'owner/repo#number' identifier."""
-        owner, repo, number = _parse_mr_id(merge_request_id)
-        data = self._graphql(_PR_QUERY, {"owner": owner, "name": repo, "number": number})
+    def get_merge_request(
+        self,
+        author: str,
+        project: str,
+        branch: str,
+        merge_request_id: str,
+    ) -> MergeRequestRecord | None:
+        """Fetch a GitHub pull request by owner, repo, and pull request number.
+
+        The ``branch`` argument is accepted for interface compatibility but is
+        not required to identify a GitHub pull request.
+        """
+        try:
+            number = int(merge_request_id)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid merge request ID '{merge_request_id}'. Expected an integer."
+            ) from exc
+        data = self._graphql(
+            _PR_QUERY, {"owner": author, "name": project, "number": number}
+        )
         node = (data.get("repository") or {}).get("pullRequest")
         if node is None:
             return None
-        return _pr_node_to_record(self.provider_name, owner, repo, node)
+        return _pr_node_to_record(self.provider_name, author, project, node)
 
     def get_merge_requests_from_user(self, user_id: str) -> list[MergeRequestRecord]:
         """Fetch open pull requests authored by the given GitHub username."""

@@ -10,8 +10,14 @@ from ubq.providers.provider import Provider
 class MergeRequestProvider(Provider, Protocol):
     """Contract that all merge request providers must implement."""
 
-    def get_merge_request(self, merge_request_id: str) -> MergeRequestRecord | None:
-        """Fetch a merge request by provider-specific identifier."""
+    def get_merge_request(
+        self,
+        author: str,
+        project: str,
+        branch: str,
+        merge_request_id: str,
+    ) -> MergeRequestRecord | None:
+        """Fetch a merge request by its individual identifying components."""
 
     def get_merge_requests_from_user(self, user_id: str) -> list[MergeRequestRecord]:
         """Fetch merge requests assigned to a specific user."""

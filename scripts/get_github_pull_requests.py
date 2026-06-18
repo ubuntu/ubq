@@ -59,8 +59,21 @@ def main():
     else:
         mr_id = sys.argv[1]
 
+        try:
+            owner_repo, number = mr_id.split("#", 1)
+            owner, repo = owner_repo.split("/", 1)
+        except ValueError:
+            print(
+                f"Error: invalid identifier '{mr_id}'. Expected 'owner/repo#number'.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
         pr = service.get_merge_request(
-            merge_request_id=mr_id,
+            author=owner,
+            project=repo,
+            branch="",
+            merge_request_id=number,
             provider_name="github",
         )
 

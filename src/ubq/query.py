@@ -69,12 +69,15 @@ class QueryService:
 
     def get_merge_request(
         self,
+        author: str,
+        project: str,
+        branch: str,
         merge_request_id: str,
         provider_name: str,
     ) -> MergeRequestRecord | None:
         """Fetch a merge request using an active session."""
         provider = self._registry.get_merge_request_provider(provider_name)
-        return provider.get_merge_request(merge_request_id)
+        return provider.get_merge_request(author, project, branch, merge_request_id)
 
     def get_merge_requests_from_user(
         self,

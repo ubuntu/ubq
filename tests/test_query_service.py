@@ -43,7 +43,7 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self.search_bug_calls: list[BugSearchRecord] = []
         self.package_calls: list[str] = []
         self.version_calls: list[tuple[str, str, str, str]] = []
-        self.merge_request_calls: list[str] = []
+        self.merge_request_calls: list[tuple[str, str, str, str]] = []
         self.assigned_merge_request_calls: list[str] = []
         self.submissions: list[BugSubmissionRecord] = []
 
@@ -140,8 +140,16 @@ class FakeProvider(BugProvider, PackageProvider, VersionProvider, MergeRequestPr
         self.package_calls.append(package_name)
         return self._packages.get(package_name)
 
-    def get_merge_request(self, merge_request_id: str) -> MergeRequestRecord | None:
-        self.merge_request_calls.append(merge_request_id)
+    def get_merge_request(
+        self,
+        author: str,
+        project: str,
+        branch: str,
+        merge_request_id: str,
+    ) -> MergeRequestRecord | None:
+        self.merge_request_calls.append(
+            (author, project, branch, merge_request_id)
+        )
         return self._merge_requests.get(merge_request_id)
 
     def get_merge_requests_from_user(self, user_id: str) -> list[MergeRequestRecord]:
@@ -206,6 +214,9 @@ class QueryServiceTests(unittest.TestCase):
             provider_name="fake",
         )
         merge_request = self.service.get_merge_request(
+            author="alice",
+            project="test-project",
+            branch="main",
             merge_request_id="17",
             provider_name="fake",
         )
@@ -217,7 +228,10 @@ class QueryServiceTests(unittest.TestCase):
         self.assertEqual(
             [("test-package", "ubuntu", "resolute", "Release")], self.provider.version_calls
         )
-        self.assertEqual(["17"], self.provider.merge_request_calls)
+        self.assertEqual(
+            [("alice", "test-project", "main", "17")],
+            self.provider.merge_request_calls,
+        )
 
     def test_get_merge_requests_from_user(self) -> None:
         self.service.login(provider_name="fake")
