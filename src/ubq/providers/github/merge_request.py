@@ -1,8 +1,9 @@
 """GitHub merge request (pull request) data provider."""
 
+from datetime import datetime
 from typing import Any
 
-from ubq.models import MergeRequestRecord, UserRecord
+from ubq.models import MergeRequestRecord, MergeRequestVoteRecord, UserRecord
 from ubq.providers.github.common import (
     parse_dt,
     parse_repo_from_api_url,
@@ -10,6 +11,20 @@ from ubq.providers.github.common import (
 )
 from ubq.providers.github.provider import GH_BASE_URL, GitHubProvider
 from ubq.providers.merge_request import MergeRequestProvider
+
+STATE_TO_VOTE_VALUE = {
+    "APPROVED": 1,  # Approve/Like
+    "CHANGES_REQUESTED": -1,  # Disapprove/Dislike
+    "COMMENTED": 0,  # Neutral comment
+    "PENDING": 0,  # Neutral - review pending
+}
+
+STATE_TO_VOTE_LABEL = {
+    "APPROVED": "APPROVE",
+    "CHANGES_REQUESTED": "DISAPPROVE",
+    "COMMENTED": "COMMENT",
+    "PENDING": "PENDING",
+}
 
 _PR_QUERY = """
 query GetPullRequest($owner: String!, $name: String!, $number: Int!) {
@@ -20,10 +35,59 @@ query GetPullRequest($owner: String!, $name: String!, $number: Int!) {
       headRefName baseRefName
       author { login }
       assignees(first: 5) { nodes { login name } }
+      reviews(first: 100) {
+        nodes {
+          author { login url }
+          state
+          submittedAt
+          body
+          commit { oid }
+        }
+      }
     }
   }
 }
 """
+
+
+def _process_reviews_to_votes(reviews: list) -> list[MergeRequestVoteRecord]:
+    """
+    Convert GitHub review nodes to MergeRequestVoteRecord objects.
+    """
+    votes = []
+    for review in reviews:
+        author = review.get("author")
+        if not author:
+            continue
+
+        state = review.get("state", "")
+        voter = UserRecord(
+            username=author.get("login", ""),
+            display_name=author.get("login", ""),  # GitHub uses same value
+            profile_url=author.get("url", ""),
+        )
+
+        vote = MergeRequestVoteRecord(
+            voter=voter,
+            vote_value=STATE_TO_VOTE_VALUE.get(state, 0),
+            vote=STATE_TO_VOTE_LABEL.get(state, state),
+            message=review.get("body") or "",
+            voted_at=_parse_datetime(review.get("submittedAt")),
+            unvoted_at=None,  # GitHub doesn't track when reviews are dismissed
+        )
+        votes.append(vote)
+
+    return votes
+
+
+def _parse_datetime(dt_str: str | None) -> datetime | None:
+    """Parse ISO 8601 datetime string from GitHub."""
+    if not dt_str:
+        return None
+    try:
+        return datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
 
 
 def _pr_node_to_record(
@@ -31,7 +95,11 @@ def _pr_node_to_record(
 ) -> MergeRequestRecord:
     number = node["number"]
     mr_id = f"{owner}/{repo}#{number}"
-    assignee_nodes = node.get("assignees", {}).get("nodes") or []
+    review_nodes = node.get("reviews", {}).get("nodes") or []
+
+    # Process reviews into votes
+    votes = _process_reviews_to_votes(review_nodes)
+
     return MergeRequestRecord(
         provider_name=provider_name,
         id=mr_id,
@@ -42,10 +110,11 @@ def _pr_node_to_record(
         target_branch=node.get("baseRefName"),
         web_url=node.get("url"),
         author=user_record(node.get("author")),
-        assignees=[r for n in assignee_nodes if (r := user_record(n)) is not None],
+        assignees=[vote.voter for vote in votes],  # Use voters as assignees
         created_at=parse_dt(node.get("createdAt")),
         updated_at=parse_dt(node.get("updatedAt")),
         merged_at=parse_dt(node.get("mergedAt")),
+        votes=votes,
     )
 
 
@@ -132,6 +201,7 @@ class GitHubMergeRequestProvider(GitHubProvider, MergeRequestProvider):
                     created_at=parse_dt(item.get("created_at")),
                     updated_at=parse_dt(item.get("updated_at")),
                     merged_at=parse_dt((item.get("pull_request") or {}).get("merged_at")),
+                    votes=[],  # Search API doesn't include reviews
                 )
             )
         return results
