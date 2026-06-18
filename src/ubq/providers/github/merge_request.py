@@ -139,9 +139,7 @@ class GitHubMergeRequestProvider(GitHubProvider, MergeRequestProvider):
             raise ValueError(
                 f"Invalid merge request ID '{merge_request_id}'. Expected an integer."
             ) from exc
-        data = self._graphql(
-            _PR_QUERY, {"owner": author, "name": project, "number": number}
-        )
+        data = self._graphql(_PR_QUERY, {"owner": author, "name": project, "number": number})
         node = (data.get("repository") or {}).get("pullRequest")
         if node is None:
             return None
