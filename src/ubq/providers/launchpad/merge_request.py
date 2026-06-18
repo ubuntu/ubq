@@ -68,10 +68,10 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
     def _convert_merge_proposal(self, mr: Any) -> MergeRequestRecord:
         """Convert a Launchpad branch merge proposal into a MergeRequestRecord."""
         votes = []
-        if hasattr(mr, "votes_collection"):
-            for vote in mr.votes_collection:
-                if hasattr(vote, "reviewer"):
-                    reviewer_data = vote.reviewer
+        if hasattr(mr, "all_comments_collection"):
+            for comment in mr.all_comments_collection:
+                if hasattr(comment, "author"):
+                    reviewer_data = comment.author
                     reviewer_name = getattr(reviewer_data, "name", None)
                     if reviewer_name is None:
                         continue
@@ -82,28 +82,31 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                         profile_url=f"{LP_BASE_USER_URL}{reviewer_name}",
                     )
 
-                    vote_type = getattr(vote, "vote", None)
+                    vote_type = getattr(comment, "vote", None)
+
+                    if vote_type is None:
+                        continue
 
                     # Set vote value based on standard vote strings
                     vote_value = 0
 
                     if vote_type == "Approve":
                         vote_value = 1
-                    elif vote_type == "Needs Fixing" or vote_type == "Disapprove" or vote_type == "Needs Resubmitting":
+                    elif vote_type in ("Needs Fixing", "Disapprove", "Needs Resubmitting"):
                         vote_value = -1
 
                     message = None
-                    comment = getattr(vote, "comment", None)
-                    if comment:
-                        message = getattr(comment, "content", None)
+                    comment_content = getattr(comment, "comment", None)
+                    if comment_content:
+                        message = getattr(comment_content, "content", None)
 
                     vote_record = MergeRequestVoteRecord(
                         voter=user_record,
                         vote_value=vote_value,
                         vote=vote_type,
                         message=message,
-                        voted_at=getattr(vote, "date_created", None),
-                        unvoted_at=getattr(vote, "date_deleted", None),
+                        voted_at=getattr(comment, "date_created", None),
+                        unvoted_at=getattr(comment, "date_deleted", None),
                     )
                     votes.append(vote_record)
 
