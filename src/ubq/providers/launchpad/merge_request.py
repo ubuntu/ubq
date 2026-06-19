@@ -67,9 +67,32 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
 
     def _convert_merge_proposal(self, mr: Any) -> MergeRequestRecord:
         """Convert a Launchpad branch merge proposal into a MergeRequestRecord."""
+        
+        # The votes collection contains assigned voters, not vote values :/
+        assignees = []
+        if hasattr(mr, "votes_collection"):
+            for vote in mr.votes_collection:
+                if hasattr(vote, "reviewer"):
+                    reviewer_data = vote.reviewer
+                    reviewer_name = getattr(reviewer_data, "name", None)
+                    if reviewer_name is not None:
+                        assignees.append(
+                            UserRecord(
+                                username=reviewer_name,
+                                display_name=getattr(reviewer_data, "display_name", None),
+                                profile_url=f"{LP_BASE_USER_URL}{reviewer_name}",
+                            )
+                        )
+
+        # Vote values can be found attached to comments
         votes = []
         if hasattr(mr, "all_comments_collection"):
             for comment in mr.all_comments_collection:
+                vote_type = getattr(comment, "vote", None)
+
+                if vote_type is None:
+                    continue
+
                 if hasattr(comment, "author"):
                     reviewer_data = comment.author
                     reviewer_name = getattr(reviewer_data, "name", None)
@@ -81,11 +104,6 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
                         display_name=getattr(reviewer_data, "display_name", None),
                         profile_url=f"{LP_BASE_USER_URL}{reviewer_name}",
                     )
-
-                    vote_type = getattr(comment, "vote", None)
-
-                    if vote_type is None:
-                        continue
 
                     # Set vote value based on standard vote strings
                     vote_value = 0
@@ -134,7 +152,7 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
             source_branch=getattr(mr, "source_git_path", None),
             target_branch=getattr(mr, "target_git_path", None),
             web_url=getattr(mr, "web_link", None),
-            assignees=[v.voter for v in votes],
+            assignees=assignees,
             created_at=getattr(mr, "date_created", None),
             merged_at=getattr(mr, "date_merged", None),
             added_lines=added_lines,
