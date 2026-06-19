@@ -67,6 +67,11 @@ def main():
         f"{merge_request.removed_lines if merge_request.removed_lines is not None else 'N/A'}"
     )
 
+    if merge_request.assignees:
+        print("  Assignees:")
+        for assignee in merge_request.assignees:
+            print(f"    - {assignee.username}")
+
     if merge_request.votes:
         print("  Votes:")
         for vote in merge_request.votes:
