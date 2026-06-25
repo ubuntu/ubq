@@ -16,6 +16,8 @@ from ubq.providers.provider import Provider
 from ubq.providers.session import ProviderSession
 from ubq.providers.snapcraft.package import SnapcraftPackageProvider
 from ubq.providers.snapcraft.version import SnapcraftVersionProvider
+from ubq.providers.upstream.package import UpstreamPackageProvider
+from ubq.providers.upstream.version import UpstreamVersionProvider
 from ubq.providers.version import VersionProvider
 
 
@@ -38,6 +40,8 @@ class ProviderRegistry:
             LaunchpadMergeRequestProvider(timeout=timeout),
             SnapcraftPackageProvider(timeout=timeout),
             SnapcraftVersionProvider(timeout=timeout),
+            UpstreamPackageProvider(timeout=timeout),
+            UpstreamVersionProvider(timeout=timeout),
         )
 
         for provider in initial_providers:
