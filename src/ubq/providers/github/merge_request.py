@@ -100,6 +100,9 @@ def _pr_node_to_record(
     # Process reviews into votes
     votes = _process_reviews_to_votes(review_nodes)
 
+    assignee_nodes = node.get("assignees", {}).get("nodes") or []
+    assignees = [user for user in (user_record(n) for n in assignee_nodes) if user is not None]
+
     return MergeRequestRecord(
         provider_name=provider_name,
         id=mr_id,
@@ -110,7 +113,7 @@ def _pr_node_to_record(
         target_branch=node.get("baseRefName"),
         web_url=node.get("url"),
         author=user_record(node.get("author")),
-        assignees=[vote.voter for vote in votes],  # Use voters as assignees
+        assignees=assignees,
         created_at=parse_dt(node.get("createdAt")),
         updated_at=parse_dt(node.get("updatedAt")),
         merged_at=parse_dt(node.get("mergedAt")),
