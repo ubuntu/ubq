@@ -109,3 +109,21 @@ class QueryService:
     def available_providers(self) -> tuple[str, ...]:
         """Return all provider names queryable by this service."""
         return self._registry.available_provider_names()
+
+    def capabilities(self, provider_name: str) -> frozenset[str]:
+        """Return the capabilities a provider supports, without logging in.
+
+        Capability names are ``"bug"``, ``"version"``, ``"package"`` and
+        ``"merge_request"``. Use this to branch before issuing a call that a
+        provider can't serve (which would otherwise raise at call time). Raises
+        ``ValueError`` for an unknown provider.
+        """
+        return self._registry.capabilities(provider_name)
+
+    def supports(self, provider_name: str, capability: str) -> bool:
+        """Return whether ``provider_name`` supports ``capability``.
+
+        Raises ``ValueError`` for an unknown provider; an unrecognized
+        capability name returns ``False``.
+        """
+        return self._registry.supports(provider_name, capability)

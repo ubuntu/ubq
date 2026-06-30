@@ -153,6 +153,36 @@ class ProviderRegistry:
         """List all registered provider names."""
         return tuple(sorted(self._providers))
 
+    def capabilities(self, provider_name: str) -> frozenset[str]:
+        """Return the set of capabilities a registered provider supports.
+
+        Capability names are ``"bug"``, ``"version"``, ``"package"`` and
+        ``"merge_request"``. Determined from the provider classes registered
+        under ``provider_name``, so it works before any ``login()``. Raises
+        ``ValueError`` for an unknown provider.
+        """
+        providers = self._get_providers(provider_name)
+        capability_classes: tuple[tuple[str, type], ...] = (
+            ("bug", BugProvider),
+            ("version", VersionProvider),
+            ("package", PackageProvider),
+            ("merge_request", MergeRequestProvider),
+        )
+        found = {
+            name
+            for name, base in capability_classes
+            if any(isinstance(provider, base) for provider in providers)
+        }
+        return frozenset(found)
+
+    def supports(self, provider_name: str, capability: str) -> bool:
+        """Return whether a registered provider supports ``capability``.
+
+        Raises ``ValueError`` for an unknown provider; an unrecognized
+        capability name simply returns ``False``.
+        """
+        return capability in self.capabilities(provider_name)
+
     def active_sessions(self) -> tuple[str, ...]:
         """List active provider sessions by provider name."""
         return tuple(sorted(self._sessions))
