@@ -110,17 +110,16 @@ def main():
         usage()
         sys.exit(1)
 
-    token = None
+    credentials = None
     if args["credentials_file"]:
-        with open(args["credentials_file"], "r") as f:
-            token = f.read().strip()
+        credentials = ProviderCredentials.from_file(args["credentials_file"])
 
     service = QueryService()
 
     try:
         service.login(
             provider_name="launchpad",
-            credentials=ProviderCredentials(token=token) if token else None,
+            credentials=credentials,
         )
     except CredentialsFileError as e:
         print(f"Invalid credentials file: {e}", file=sys.stderr)

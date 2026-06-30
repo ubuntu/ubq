@@ -20,15 +20,13 @@ def main():
         sys.exit(1)
 
     bug_id = sys.argv[1]
-    token = None
+    credentials = None
 
     # Extract credentials from file if provided
     if "--credentials-file" in sys.argv:
         cred_idx = sys.argv.index("--credentials-file")
         if cred_idx + 1 < len(sys.argv):
-            cred_file = sys.argv[cred_idx + 1]
-            with open(cred_file, "r") as f:
-                token = f.read().strip()
+            credentials = ProviderCredentials.from_file(sys.argv[cred_idx + 1])
 
     # Fetch comments too
     show_comments = "--show-comments" in sys.argv
@@ -40,7 +38,7 @@ def main():
     try:
         service.login(
             provider_name="launchpad",
-            credentials=ProviderCredentials(token=token) if token else None,
+            credentials=credentials,
         )
     except CredentialsFileError as e:
         print(f"Invalid credentials file: {e}", file=sys.stderr)
