@@ -67,7 +67,7 @@ class LaunchpadMergeRequestProvider(LaunchpadProvider, MergeRequestProvider):
 
     def _convert_merge_proposal(self, mr: Any) -> MergeRequestRecord:
         """Convert a Launchpad branch merge proposal into a MergeRequestRecord."""
-        
+
         # The votes collection contains assigned voters, not vote values :/
         assignees = []
         if hasattr(mr, "votes_collection"):
