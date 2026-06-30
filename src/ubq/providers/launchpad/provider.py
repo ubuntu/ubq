@@ -68,10 +68,9 @@ class LaunchpadProvider(Provider):
             )
 
         else:
-            self._launchpad = Launchpad.login_with(
-                application_name="ubq",
+            self._launchpad = Launchpad.login_anonymously(
+                "ubq",
                 service_root="production",
-                allow_access_levels=["READ_PUBLIC"],
                 version="devel",
             )
 
