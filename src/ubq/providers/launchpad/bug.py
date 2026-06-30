@@ -20,7 +20,7 @@ VALID_BUG_STATUSES = {
     "Incomplete",
     "Opinion",
     "Invalid",
-    "Won\\'t Fix",
+    "Won't Fix",
     "Expired",
     "Confirmed",
     "Triaged",
