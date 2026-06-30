@@ -1,3 +1,9 @@
+python-ubq (0.5.4-0ubuntu1) resolute; urgency=medium
+
+  * New upstream version 0.5.4
+
+ -- Lena Voytek <lena@voytek.dev>  Tue, 30 Jun 2026 15:21:29 -0400
+
 python-ubq (0.5.3-0ubuntu1) resolute; urgency=medium
 
   * New upstream version 0.5.3
