@@ -1,5 +1,6 @@
 """GitHub bug (issue) data provider."""
 
+import warnings
 from typing import Any
 
 from ubq.models import (
@@ -189,6 +190,29 @@ class GitHubBugProvider(GitHubProvider, BugProvider):
             )
         return results
 
+    @staticmethod
+    def _warn_unsupported_submission_fields(submission: BugSubmissionRecord) -> None:
+        """Warn about set fields that GitHub issue creation cannot honor."""
+        ignored: list[str] = []
+        if submission.importance is not None:
+            ignored.append("importance")
+        if submission.status is not None:
+            ignored.append("status")
+        if submission.private:
+            ignored.append("private")
+        if submission.milestone is not None:
+            ignored.append("milestone")
+        if submission.subscribers:
+            ignored.append("subscribers")
+
+        if ignored:
+            warnings.warn(
+                "GitHub issue creation ignores these BugSubmissionRecord "
+                f"fields: {', '.join(ignored)}. They were not applied.",
+                UserWarning,
+                stacklevel=3,
+            )
+
     def submit_bug(self, submission: BugSubmissionRecord) -> BugRecord | None:
         """Create a new GitHub issue and return the created record.
 
@@ -208,6 +232,8 @@ class GitHubBugProvider(GitHubProvider, BugProvider):
             raise ValueError(
                 f"package_names[0] must be 'owner/repo', got '{target_repo}'."
             ) from exc
+
+        self._warn_unsupported_submission_fields(submission)
 
         body: dict[str, Any] = {"title": submission.title}
         if submission.description is not None:
