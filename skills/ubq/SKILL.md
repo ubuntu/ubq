@@ -1,11 +1,11 @@
 ---
 name: ubq
-description: "Use when an agent must query Ubuntu data (bugs, package versions, packages, merge/pull requests) from Launchpad, GitHub, or Snapcraft via the ubq Python library. Central hub: architecture, the QueryService API, authentication (anonymous / token / token-from-file), the provider capability matrix, and shared data models. Load a provider sub-skill (ubq-launchpad, ubq-github, ubq-snapcraft) for per-service identifiers and field semantics."
-version: 1.0.0
+description: "Use when an agent must query Ubuntu data (bugs, package versions, packages, merge/pull requests) from Launchpad, GitHub, Snapcraft, or third-party upstream sources via the ubq Python library. Central hub: architecture, the QueryService API, authentication (anonymous / token / token-from-file), the provider capability matrix, and shared data models. Load a provider sub-skill (ubq-launchpad, ubq-github, ubq-snapcraft, ubq-upstream) for per-service identifiers and field semantics."
+version: 1.1.0
 author: Lena Voytek
 metadata:
-    tags: [ubq, ubuntu, launchpad, github, snapcraft, bugs, packages, data-query, python]
-    related_skills: [ubq-launchpad, ubq-github, ubq-snapcraft]
+    tags: [ubq, ubuntu, launchpad, github, snapcraft, upstream, bugs, packages, data-query, python]
+    related_skills: [ubq-launchpad, ubq-github, ubq-snapcraft, ubq-upstream]
 ---
 
 # ubq — Ubuntu Query Library
@@ -15,8 +15,9 @@ metadata:
 `ubq` (Ubuntu Query) is a Python library that gives one common interface for
 reading (and, for some providers, writing) Ubuntu-related data spread across
 several services. Instead of learning the Launchpad API, the GitHub GraphQL/REST
-API, and the Snapcraft Store API separately, an agent talks to a single
-`QueryService` and gets back normalized dataclass records.
+API, the Snapcraft Store API, and assorted upstream release sites separately, an
+agent talks to a single `QueryService` and gets back normalized dataclass
+records.
 
 Two layers (see `src/ubq/README.md`):
 
@@ -31,28 +32,32 @@ The top-level `ubq` package exposes **`QueryService`** as the single entry point
 This is the API agents should call — not the provider classes directly, and not
 the `ubuntu-mcp` wrapper (whose method signatures differ from ubq's).
 
-Three providers ship today:
+Four providers ship today:
 
 | provider name | service           | reads                          | writes |
 |---------------|-------------------|--------------------------------|--------|
 | `launchpad`   | Launchpad         | bugs, versions, packages, MRs  | bugs   |
 | `github`      | GitHub            | issues (bugs), pull requests   | issues |
 | `snapcraft`   | Snapcraft Store   | snap versions, snap packages   | —      |
+| `upstream`    | third-party sites | upstream versions, packages    | —      |
 
 Confirm at runtime with `QueryService().available_providers()` →
-`('github', 'launchpad', 'snapcraft')`.
+`('github', 'launchpad', 'snapcraft', 'upstream')`.
 
 ## When to Use
 
 - Programmatically fetching an Ubuntu/Debian package version across series, a
-  Launchpad bug, a GitHub issue/PR, or a snap's channel version.
+  Launchpad bug, a GitHub issue/PR, a snap's channel version, or the latest
+  third-party upstream release of a package.
 - Searching or submitting Launchpad bugs / GitHub issues from a script or agent.
 - Any task where you'd otherwise hand-roll a Launchpad/GitHub/Snapcraft API call
-  for data ubq already models.
+  or scrape an upstream release page for data ubq already models.
 
-Don't use for: tasks the providers don't cover (e.g. Snapcraft has no bug or
-merge-request capability; GitHub has no package/version capability). Calling an
-unsupported capability raises `ValueError`. See the capability matrix below.
+Don't use for: tasks the providers don't cover (e.g. Snapcraft and Upstream have
+no bug or merge-request capability; GitHub has no package/version capability;
+Upstream is version+package only and excludes GitHub/Launchpad/Debian/Ubuntu
+sources). Calling an unsupported capability raises `ValueError`. See the
+capability matrix below.
 
 ## Installation & Integration
 
@@ -75,7 +80,7 @@ from ubq.models import (
 )
 
 service = QueryService()
-print(service.available_providers())     # ('github', 'launchpad', 'snapcraft')
+print(service.available_providers())     # ('github', 'launchpad', 'snapcraft', 'upstream')
 ```
 
 Public names: `QueryService` and `RequestTimeoutError` come from the top-level
@@ -129,7 +134,8 @@ Key gotchas:
 
 - `get_version` and `get_package` take an **`archive`** argument
   (`"ubuntu"`, `"debian"`, or the Snapcraft base URL). This is required and
-  provider-specific — see the sub-skills.
+  provider-specific — see the sub-skills. (The `upstream` provider ignores it —
+  pass `""`.)
 - `get_merge_request` is keyed by **four** parts
   (`author`, `project`, `branch`, `merge_request_id`), not a single ID string.
   Providers interpret these differently (GitHub ignores `branch`).
@@ -219,12 +225,12 @@ from anonymous to a token).
 Not every provider implements every capability. Calling a method the provider
 can't serve raises `ValueError: Provider 'X' does not support Y queries.`
 
-| capability (method) | launchpad | github | snapcraft |
-|---------------------|:---------:|:------:|:---------:|
-| `get_bug` / `search_bugs` / `submit_bug` | ✅ | ✅ (issues) | ❌ |
-| `get_version` | ✅ | ❌ | ✅ |
-| `get_package` | ✅ | ❌ | ✅ |
-| `get_merge_request` / `get_merge_requests_from_user` | ✅ | ✅ (PRs) | ❌ |
+| capability (method) | launchpad | github | snapcraft | upstream |
+|---------------------|:---------:|:------:|:---------:|:--------:|
+| `get_bug` / `search_bugs` / `submit_bug` | ✅ | ✅ (issues) | ❌ | ❌ |
+| `get_version` | ✅ | ❌ | ✅ | ✅ |
+| `get_package` | ✅ | ❌ | ✅ | ✅ |
+| `get_merge_request` / `get_merge_requests_from_user` | ✅ | ✅ (PRs) | ❌ | ❌ |
 
 Branch **before** calling rather than catching the `ValueError`, using runtime
 introspection (works without `login()`):
@@ -241,9 +247,10 @@ unrecognized capability name just returns `False`.
 
 Identifier formats and field semantics differ sharply between providers (a
 GitHub bug id is `owner/repo#number`; a Launchpad bug id is a bare number; a
-Launchpad MR needs `~author/project/branch/+merge/id`). **Load the matching
-sub-skill before constructing identifiers:** `ubq-launchpad`, `ubq-github`,
-`ubq-snapcraft`.
+Launchpad MR needs `~author/project/branch/+merge/id`; the upstream provider
+ignores `archive`/`series`/`pocket` entirely). **Load the matching sub-skill
+before constructing identifiers:** `ubq-launchpad`, `ubq-github`,
+`ubq-snapcraft`, `ubq-upstream`.
 
 ## Data Models (what you get back)
 
@@ -319,7 +326,7 @@ print(ubuntu.version_string if ubuntu else "n/a",
    (`owner/repo#number`). Load the provider sub-skill first.
 3. **Forgetting the `archive` arg** on `get_version` / `get_package`. It's
    required and provider-specific (`"ubuntu"`/`"debian"` for Launchpad; the
-   `"https://snapcraft.io/"` base for snaps).
+   `"https://snapcraft.io/"` base for snaps; ignored — pass `""` — for upstream).
 4. **Assuming anonymous GitHub is truly anonymous.** It opportunistically uses
    `GITHUB_TOKEN` or `gh auth token`. Pass an explicit `ProviderCredentials`
    when you need deterministic auth, or expect rate-limiting when none is found.
@@ -334,7 +341,7 @@ print(ubuntu.version_string if ubuntu else "n/a",
 
 ## Verification Checklist
 
-- [ ] `ubq` installed (`pip install ubq` / `uv add ubq`); `python -c "from ubq import QueryService; print(QueryService().available_providers())"` prints `('github', 'launchpad', 'snapcraft')`
+- [ ] `ubq` installed (`pip install ubq` / `uv add ubq`); `python -c "from ubq import QueryService; print(QueryService().available_providers())"` prints `('github', 'launchpad', 'snapcraft', 'upstream')`
 - [ ] `login()` called for the target provider before any query
 - [ ] Correct `provider_name` passed on every call
 - [ ] For versions/packages: `archive` argument supplied and provider-appropriate

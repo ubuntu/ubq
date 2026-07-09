@@ -5,7 +5,7 @@ version: 1.0.0
 author: Lena Voytek
 metadata:
     tags: [ubq, snapcraft, snap, versions, packages, channels, store]
-    related_skills: [ubq, ubq-launchpad, ubq-github]
+    related_skills: [ubq, ubq-launchpad, ubq-github, ubq-upstream]
 ---
 
 # ubq — Snapcraft Provider (`provider_name="snapcraft"`)

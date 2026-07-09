@@ -5,7 +5,7 @@ version: 1.0.0
 author: Lena Voytek
 metadata:
     tags: [ubq, launchpad, ubuntu, debian, bugs, packages, versions, merge-proposals]
-    related_skills: [ubq, ubq-github, ubq-snapcraft]
+    related_skills: [ubq, ubq-github, ubq-snapcraft, ubq-upstream]
 ---
 
 # ubq — Launchpad Provider (`provider_name="launchpad"`)

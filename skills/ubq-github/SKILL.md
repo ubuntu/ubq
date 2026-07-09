@@ -5,7 +5,7 @@ version: 1.0.0
 author: Lena Voytek
 metadata:
     tags: [ubq, github, issues, pull-requests, bugs, merge-requests, graphql]
-    related_skills: [ubq, ubq-launchpad, ubq-snapcraft]
+    related_skills: [ubq, ubq-launchpad, ubq-snapcraft, ubq-upstream]
 ---
 
 # ubq — GitHub Provider (`provider_name="github"`)
