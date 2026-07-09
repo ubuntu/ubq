@@ -16,6 +16,9 @@ from ubq.providers.session import ProviderSession
 from ubq.providers.snapcraft.package import SnapcraftPackageProvider
 from ubq.providers.snapcraft.provider import SnapcraftProvider
 from ubq.providers.snapcraft.version import SnapcraftVersionProvider
+from ubq.providers.upstream.package import UpstreamPackageProvider
+from ubq.providers.upstream.provider import UpstreamProvider
+from ubq.providers.upstream.version import UpstreamVersionProvider
 from ubq.providers.version import VersionProvider
 
 __all__ = [
@@ -36,4 +39,7 @@ __all__ = [
     "SnapcraftProvider",
     "SnapcraftPackageProvider",
     "SnapcraftVersionProvider",
+    "UpstreamProvider",
+    "UpstreamPackageProvider",
+    "UpstreamVersionProvider",
 ]

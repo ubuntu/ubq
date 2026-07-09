@@ -18,3 +18,14 @@ The package includes the following providers
 - `LaunchpadProvider` - handles launchpadlib auth
 - `LaunchpadBugProvider`
 - `LaunchpadPackageProvider`
+
+### Upstream
+The upstream provider serves third-party upstream metadata for packages,
+derived from a generated data file (`upstream/data/packages.toml`). It does not
+cover GitHub- or Launchpad-hosted sources, or sources tracked via the Debian or
+Ubuntu archives.
+
+The package includes the following providers
+- `UpstreamProvider` - shared base (no authentication required)
+- `UpstreamPackageProvider` - upstream project location for a package
+- `UpstreamVersionProvider` - latest upstream version for a package
