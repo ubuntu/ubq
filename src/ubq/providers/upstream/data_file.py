@@ -1,5 +1,6 @@
 """Loading and validation of the upstream package data file."""
 
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -38,13 +39,30 @@ def parse_source(name: str, raw: dict) -> UpstreamSource:
     for required in ("stable_url", "stable_regex"):
         if not raw.get(required):
             raise ValueError(f"Package '{name}' is missing required field '{required}'.")
+
+    stable_regex = raw["stable_regex"]
+    try:
+        re.compile(stable_regex)
+    except re.error as exc:
+        raise ValueError(
+            f"Package '{name}' has invalid stable_regex {stable_regex!r}."
+        ) from exc
+    unstable_regex = raw.get("unstable_regex")
+    if unstable_regex:
+        try:
+            re.compile(unstable_regex)
+        except re.error as exc:
+            raise ValueError(
+                f"Package '{name}' has invalid unstable_regex {unstable_regex!r}."
+            ) from exc
+
     return UpstreamSource(
         name=name,
         type=source_type,
         stable_url=raw["stable_url"],
-        stable_regex=raw["stable_regex"],
+        stable_regex=stable_regex,
         unstable_url=raw.get("unstable_url"),
-        unstable_regex=raw.get("unstable_regex"),
+        unstable_regex=unstable_regex,
         tags=tuple(raw.get("tags", ())),
         flavors=tuple(raw.get("flavors", ())),
         version_fixups=tuple(raw.get("version_fixups", ())),
