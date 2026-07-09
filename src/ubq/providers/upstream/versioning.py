@@ -80,9 +80,9 @@ def max_version(a: str | None, b: str | None) -> str | None:
     return a if compare_versions(a, b) > 0 else b
 
 
-_UNDERSCORED_VERSION = re.compile(r"[0-9][0-9_A-z-]+")
+_UNDERSCORED_VERSION = re.compile(r"[0-9][0-9A-Za-z_-]+")
 _DASHED_VERSION = re.compile(r"[0-9][0-9-]+")
-_GNOME_NEW_VERSION = re.compile(r"(([0-9]+(?:\.[0-9]+)?)(?:.(alpha|beta|rc|[0-9]+))?)")
+_GNOME_NEW_VERSION = re.compile(r"(([0-9]+(?:\.[0-9]+)?)(?:\.(alpha|beta|rc|[0-9]+))?)")
 
 
 def _libreoffice_triplet(v: str) -> str:
