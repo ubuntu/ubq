@@ -20,13 +20,15 @@ class UpstreamProvider:
         fetch_context: FetchContext | None = None,
     ) -> None:
         self._timeout = timeout
-        self._sources = sources if sources is not None else load_sources()
+        self._sources = sources
         self._fetch_context = fetch_context or FetchContext(
             timeout=timeout, provider_name=self.provider_name
         )
         self._session_object: Any = None
 
     def _get_source(self, name: str) -> UpstreamSource | None:
+        if self._sources is None:
+            self._sources = load_sources()
         return self._sources.get(name)
 
     def authenticate(self, auth_context: AuthContext) -> ProviderSession:
